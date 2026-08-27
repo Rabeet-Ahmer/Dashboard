@@ -35,7 +35,7 @@ export function EmployeeDetailModal({
 
   if (!employee) return null;
 
-  const isActive = employee.userStatus.toLowerCase().includes('active');
+  const isActive = (employee.userStatus || '').toLowerCase().includes('active');
 
   const handleCopy = (field: string, text?: string) => {
     if (!text) return;
@@ -46,17 +46,17 @@ export function EmployeeDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-6">
-        <DialogHeader className="pb-3 border-b border-border">
-          <div className="flex items-start justify-between gap-4">
+      <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 rounded-xl sm:rounded-2xl">
+        <DialogHeader className="pb-3 border-b border-border text-left">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-4 pr-6 sm:pr-0">
             <div>
-              <div className="flex items-center gap-2">
-                <DialogTitle className="text-lg font-bold text-foreground">
+              <div className="flex flex-wrap items-center gap-2">
+                <DialogTitle className="text-base sm:text-lg font-bold text-foreground">
                   {employee.fullName}
                 </DialogTitle>
                 <Badge
                   variant="outline"
-                  className={`text-xs px-2 py-0 font-medium ${
+                  className={`text-[10px] sm:text-xs px-2 py-0 font-medium ${
                     isActive
                       ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
                       : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
@@ -65,39 +65,39 @@ export function EmployeeDetailModal({
                   {employee.userStatus}
                 </Badge>
               </div>
-              <DialogDescription className="text-xs flex items-center gap-2 mt-1">
+              <DialogDescription className="text-xs flex flex-wrap items-center gap-1.5 mt-1">
                 <span className="font-mono font-semibold text-foreground">
                   {employee.employeeNumber}
                 </span>
                 <span>•</span>
                 <span>{employee.positionName}</span>
                 <span>•</span>
-                <span>{employee.group}</span>
+                <span className="truncate">{employee.group}</span>
               </DialogDescription>
             </div>
 
             {employee.sheetOrigin && (
-              <Badge variant="secondary" className="text-[10px] font-mono">
+              <Badge variant="secondary" className="text-[10px] font-mono self-start sm:self-auto">
                 {employee.sheetOrigin}
               </Badge>
             )}
           </div>
         </DialogHeader>
 
-        <div className="space-y-4 py-2 text-xs">
+        <div className="space-y-3 sm:space-y-4 py-2 text-xs">
           {/* Grid of 4 Sections */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {/* Section 1: Personal & Demographics */}
-            <div className="border border-border rounded-lg p-3.5 bg-muted/20 space-y-2.5">
-              <h4 className="font-semibold text-foreground flex items-center gap-2 text-xs">
+            <div className="border border-border rounded-lg p-3 sm:p-3.5 bg-muted/20 space-y-2">
+              <h4 className="font-semibold text-foreground flex items-center gap-1.5 text-xs">
                 <User className="h-3.5 w-3.5 text-muted-foreground" />
                 Personal Demographics
               </h4>
               <Separator />
-              <div className="grid grid-cols-2 gap-2.5 text-muted-foreground">
+              <div className="grid grid-cols-2 gap-2 text-muted-foreground">
                 <div>
                   <span className="text-[10px] uppercase text-muted-foreground/70 block">Father Name</span>
-                  <span className="font-medium text-foreground">{employee.fatherName || 'N/A'}</span>
+                  <span className="font-medium text-foreground truncate block">{employee.fatherName || 'N/A'}</span>
                 </div>
                 <div>
                   <span className="text-[10px] uppercase text-muted-foreground/70 block">Gender</span>
@@ -109,7 +109,7 @@ export function EmployeeDetailModal({
                 </div>
                 <div>
                   <span className="text-[10px] uppercase text-muted-foreground/70 block">Age</span>
-                  <span className="font-medium text-foreground">{employee.age} Yrs ({employee.ageGroup})</span>
+                  <span className="font-medium text-foreground">{employee.age} Yrs</span>
                 </div>
                 <div>
                   <span className="text-[10px] uppercase text-muted-foreground/70 block">Marital Status</span>
@@ -123,13 +123,13 @@ export function EmployeeDetailModal({
             </div>
 
             {/* Section 2: Organization & Hierarchy */}
-            <div className="border border-border rounded-lg p-3.5 bg-muted/20 space-y-2.5">
-              <h4 className="font-semibold text-foreground flex items-center gap-2 text-xs">
+            <div className="border border-border rounded-lg p-3 sm:p-3.5 bg-muted/20 space-y-2">
+              <h4 className="font-semibold text-foreground flex items-center gap-1.5 text-xs">
                 <Briefcase className="h-3.5 w-3.5 text-muted-foreground" />
                 Organization & Cadre
               </h4>
               <Separator />
-              <div className="grid grid-cols-2 gap-2.5 text-muted-foreground">
+              <div className="grid grid-cols-2 gap-2 text-muted-foreground">
                 <div>
                   <span className="text-[10px] uppercase text-muted-foreground/70 block">Business Group</span>
                   <span className="font-medium text-foreground truncate block">{employee.group}</span>
@@ -151,24 +151,24 @@ export function EmployeeDetailModal({
                   <span className="font-medium text-foreground truncate block">{employee.job}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase text-muted-foreground/70 block">Employment Type</span>
+                  <span className="text-[10px] uppercase text-muted-foreground/70 block">Employment</span>
                   <span className="font-medium text-foreground">{employee.employmentType}</span>
                 </div>
                 <div className="col-span-2">
                   <span className="text-[10px] uppercase text-muted-foreground/70 block">Supervisor</span>
-                  <span className="font-medium text-foreground">{employee.supervisor || 'N/A'}</span>
+                  <span className="font-medium text-foreground truncate block">{employee.supervisor || 'N/A'}</span>
                 </div>
               </div>
             </div>
 
             {/* Section 3: Branch & Geography */}
-            <div className="border border-border rounded-lg p-3.5 bg-muted/20 space-y-2.5">
-              <h4 className="font-semibold text-foreground flex items-center gap-2 text-xs">
+            <div className="border border-border rounded-lg p-3 sm:p-3.5 bg-muted/20 space-y-2">
+              <h4 className="font-semibold text-foreground flex items-center gap-1.5 text-xs">
                 <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                Branch & Network Placement
+                Branch & Geography
               </h4>
               <Separator />
-              <div className="grid grid-cols-2 gap-2.5 text-muted-foreground">
+              <div className="grid grid-cols-2 gap-2 text-muted-foreground">
                 <div>
                   <span className="text-[10px] uppercase text-muted-foreground/70 block">Branch Code</span>
                   <span className="font-mono font-semibold text-foreground">{employee.branchCode}</span>
@@ -186,50 +186,46 @@ export function EmployeeDetailModal({
                   <span className="font-medium text-foreground">{employee.cluster}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase text-muted-foreground/70 block">Branch Category</span>
-                  <span className="font-medium text-foreground">{employee.branchCategory}</span>
+                  <span className="text-[10px] uppercase text-muted-foreground/70 block">Category</span>
+                  <span className="font-medium text-foreground truncate block">{employee.branchCategory}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase text-muted-foreground/70 block">Flagship Status</span>
+                  <span className="text-[10px] uppercase text-muted-foreground/70 block">Flagship</span>
                   <span className="font-medium text-foreground">{employee.flagship}</span>
                 </div>
               </div>
             </div>
 
             {/* Section 4: Tenure, Identity & Contacts */}
-            <div className="border border-border rounded-lg p-3.5 bg-muted/20 space-y-2.5">
-              <h4 className="font-semibold text-foreground flex items-center gap-2 text-xs">
+            <div className="border border-border rounded-lg p-3 sm:p-3.5 bg-muted/20 space-y-2">
+              <h4 className="font-semibold text-foreground flex items-center gap-1.5 text-xs">
                 <ShieldCheck className="h-3.5 w-3.5 text-muted-foreground" />
-                Tenure & Identification
+                Tenure & Identity
               </h4>
               <Separator />
-              <div className="grid grid-cols-2 gap-2.5 text-muted-foreground">
+              <div className="grid grid-cols-2 gap-2 text-muted-foreground">
                 <div>
                   <span className="text-[10px] uppercase text-muted-foreground/70 block">Hire Date</span>
                   <span className="font-mono font-medium text-foreground">{employee.hireDate}</span>
                 </div>
                 <div>
                   <span className="text-[10px] uppercase text-muted-foreground/70 block">Tenure</span>
-                  <span className="font-medium text-foreground">{employee.tenureYears} Yrs ({employee.tenureGroup})</span>
+                  <span className="font-medium text-foreground">{employee.tenureYears} Yrs</span>
                 </div>
-                <div>
+                <div className="col-span-2">
                   <span className="text-[10px] uppercase text-muted-foreground/70 block">National ID</span>
                   <span className="font-mono font-medium text-foreground block truncate">{employee.nationalIdentity || 'N/A'}</span>
                 </div>
-                <div>
-                  <span className="text-[10px] uppercase text-muted-foreground/70 block">Account No</span>
-                  <span className="font-mono font-medium text-foreground block truncate">{employee.accountNo || 'N/A'}</span>
-                </div>
                 <div className="col-span-2">
                   <span className="text-[10px] uppercase text-muted-foreground/70 block">Work Email</span>
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono font-medium text-foreground truncate block max-w-[220px]">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="font-mono font-medium text-foreground truncate block">
                       {employee.emailAddress || 'N/A'}
                     </span>
                     {employee.emailAddress && (
                       <button
                         onClick={() => handleCopy('email', employee.emailAddress)}
-                        className="text-muted-foreground hover:text-foreground p-1"
+                        className="text-muted-foreground hover:text-foreground p-1 shrink-0"
                         title="Copy Email"
                       >
                         {copiedField === 'email' ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
@@ -238,7 +234,7 @@ export function EmployeeDetailModal({
                   </div>
                 </div>
                 <div className="col-span-2">
-                  <span className="text-[10px] uppercase text-muted-foreground/70 block">Contact Number</span>
+                  <span className="text-[10px] uppercase text-muted-foreground/70 block">Contact</span>
                   <span className="font-mono font-medium text-foreground">{employee.contactId || 'N/A'}</span>
                 </div>
               </div>

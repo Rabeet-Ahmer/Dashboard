@@ -97,7 +97,7 @@ export function GlobalFilterBar({
   }, [filters]);
 
   return (
-    <div className="border-b border-border bg-card/60 px-8 py-4 space-y-3 transition-all">
+    <div className="border-b border-border bg-card/60 px-4 sm:px-6 lg:px-8 py-3.5 space-y-3 transition-all">
       {/* Header of filter panel */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
@@ -109,18 +109,18 @@ export function GlobalFilterBar({
             variant="ghost"
             size="sm"
             onClick={onResetFilters}
-            className="h-7 text-xs px-2.5 text-muted-foreground hover:text-foreground gap-1.5"
+            className="h-7 text-xs px-2 text-muted-foreground hover:text-foreground gap-1.5"
           >
             <RotateCcw className="h-3 w-3" />
-            Reset all filters
+            <span>Reset all</span>
           </Button>
         )}
       </div>
 
-      {/* Select Controls Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
+      {/* Select Controls Grid (Responsive 1 -> 2 -> 4 -> 7 cols) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
         {/* Region */}
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <label className="text-[11px] font-medium text-muted-foreground block">
             Region
           </label>
@@ -133,7 +133,7 @@ export function GlobalFilterBar({
               }
             }}
           >
-            <SelectTrigger className="h-8.5 text-xs bg-background border-border rounded-lg">
+            <SelectTrigger className="h-8.5 text-xs bg-background border-border rounded-lg w-full">
               <SelectValue placeholder="All Regions" />
             </SelectTrigger>
             <SelectContent className="rounded-xl">
@@ -148,7 +148,7 @@ export function GlobalFilterBar({
         </div>
 
         {/* Cluster */}
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <label className="text-[11px] font-medium text-muted-foreground block">
             Cluster
           </label>
@@ -159,7 +159,7 @@ export function GlobalFilterBar({
             }}
             disabled={uniqueClusters.length === 0}
           >
-            <SelectTrigger className="h-8.5 text-xs bg-background border-border rounded-lg">
+            <SelectTrigger className="h-8.5 text-xs bg-background border-border rounded-lg w-full">
               <SelectValue placeholder="All Clusters" />
             </SelectTrigger>
             <SelectContent className="rounded-xl">
@@ -174,7 +174,7 @@ export function GlobalFilterBar({
         </div>
 
         {/* Business Group */}
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <label className="text-[11px] font-medium text-muted-foreground block">
             Business Group
           </label>
@@ -187,7 +187,7 @@ export function GlobalFilterBar({
               }
             }}
           >
-            <SelectTrigger className="h-8.5 text-xs bg-background border-border rounded-lg">
+            <SelectTrigger className="h-8.5 text-xs bg-background border-border rounded-lg w-full">
               <SelectValue placeholder="All Groups" />
             </SelectTrigger>
             <SelectContent className="rounded-xl">
@@ -202,7 +202,7 @@ export function GlobalFilterBar({
         </div>
 
         {/* Sub-Group / Dept */}
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <label className="text-[11px] font-medium text-muted-foreground block">
             Department
           </label>
@@ -213,7 +213,7 @@ export function GlobalFilterBar({
             }}
             disabled={uniqueSubGroups.length === 0}
           >
-            <SelectTrigger className="h-8.5 text-xs bg-background border-border rounded-lg">
+            <SelectTrigger className="h-8.5 text-xs bg-background border-border rounded-lg w-full">
               <SelectValue placeholder="All Sub-Groups" />
             </SelectTrigger>
             <SelectContent className="rounded-xl">
@@ -228,7 +228,7 @@ export function GlobalFilterBar({
         </div>
 
         {/* Cadre */}
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <label className="text-[11px] font-medium text-muted-foreground block">
             Cadre
           </label>
@@ -238,7 +238,7 @@ export function GlobalFilterBar({
               if (val) onFilterChange('cadre', val);
             }}
           >
-            <SelectTrigger className="h-8.5 text-xs bg-background border-border rounded-lg">
+            <SelectTrigger className="h-8.5 text-xs bg-background border-border rounded-lg w-full">
               <SelectValue placeholder="All Cadres" />
             </SelectTrigger>
             <SelectContent className="rounded-xl">
@@ -253,7 +253,7 @@ export function GlobalFilterBar({
         </div>
 
         {/* User Status */}
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <label className="text-[11px] font-medium text-muted-foreground block">
             Status
           </label>
@@ -263,7 +263,7 @@ export function GlobalFilterBar({
               if (val) onFilterChange('userStatus', val);
             }}
           >
-            <SelectTrigger className="h-8.5 text-xs bg-background border-border rounded-lg">
+            <SelectTrigger className="h-8.5 text-xs bg-background border-border rounded-lg w-full">
               <SelectValue placeholder="All Statuses" />
             </SelectTrigger>
             <SelectContent className="rounded-xl">
@@ -278,7 +278,7 @@ export function GlobalFilterBar({
         </div>
 
         {/* Gender */}
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <label className="text-[11px] font-medium text-muted-foreground block">
             Gender
           </label>
@@ -288,7 +288,7 @@ export function GlobalFilterBar({
               if (val) onFilterChange('gender', val);
             }}
           >
-            <SelectTrigger className="h-8.5 text-xs bg-background border-border rounded-lg">
+            <SelectTrigger className="h-8.5 text-xs bg-background border-border rounded-lg w-full">
               <SelectValue placeholder="All Genders" />
             </SelectTrigger>
             <SelectContent className="rounded-xl">
@@ -304,7 +304,7 @@ export function GlobalFilterBar({
       {activeFilterTags.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-border/50">
           <span className="text-[11px] font-medium text-muted-foreground mr-1">
-            Active filters:
+            Active:
           </span>
           {activeFilterTags.map((tag) => (
             <Badge

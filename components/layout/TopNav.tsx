@@ -16,7 +16,8 @@ import {
   FileSpreadsheet,
   SlidersHorizontal,
   FileText,
-  Layers
+  Layers,
+  Menu
 } from 'lucide-react';
 import { exportRecordsToExcel, exportRecordsToCSV } from '@/lib/excel-parser';
 import { EmployeeRecord } from '@/types/hr';
@@ -30,6 +31,7 @@ interface TopNavProps {
   showFilters: boolean;
   onToggleFilters: () => void;
   activeFilterCount: number;
+  onOpenMobileMenu?: () => void;
 }
 
 export function TopNav({
@@ -41,27 +43,49 @@ export function TopNav({
   showFilters,
   onToggleFilters,
   activeFilterCount,
+  onOpenMobileMenu,
 }: TopNavProps) {
   return (
-    <header className="sticky top-0 z-20 h-16 border-b border-border bg-background/95 backdrop-blur-xs flex items-center justify-between px-8">
-      {/* Left: View Title & Sheet Breadcrumb */}
-      <div className="flex items-center gap-3">
-        <h1 className="text-lg font-bold tracking-tight text-foreground">
-          {activeTabTitle}
-        </h1>
+    <header className="sticky top-0 z-20 h-14 sm:h-16 border-b border-border bg-background/95 backdrop-blur-xs flex items-center justify-between px-3 sm:px-6 lg:px-8">
+      {/* Left: Mobile Menu Toggle + View Title & Sheet Breadcrumb */}
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        {/* Mobile Hamburger Button */}
+        {onOpenMobileMenu && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onOpenMobileMenu}
+            className="lg:hidden h-9 w-9 text-muted-foreground hover:text-foreground shrink-0"
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        )}
+
+        <div className="min-w-0">
+          <h1 className="text-sm sm:text-base lg:text-lg font-bold tracking-tight text-foreground truncate">
+            {activeTabTitle}
+          </h1>
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground sm:hidden truncate">
+            <span className="truncate">{activeSheetName === 'ALL' ? 'All Sheets' : activeSheetName}</span>
+            <span>•</span>
+            <span className="font-mono">{filteredCount}/{totalCount}</span>
+          </div>
+        </div>
+
         <div className="h-4 w-px bg-border hidden sm:block" />
-        <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Layers className="h-3.5 w-3.5 text-muted-foreground/70" />
-          <span>Sheet:</span>
-          <Badge variant="secondary" className="text-xs font-mono font-medium px-2 py-0.5">
+        <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground truncate">
+          <Layers className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
+          <span className="hidden md:inline">Sheet:</span>
+          <Badge variant="secondary" className="text-xs font-mono font-medium px-2 py-0.5 truncate max-w-[140px] md:max-w-[200px]">
             {activeSheetName === 'ALL' ? 'All Sheets Combined' : activeSheetName}
           </Badge>
         </div>
       </div>
 
       {/* Right: Telemetry pill, Filter toggle & Export action */}
-      <div className="flex items-center gap-3">
-        {/* Record count indicator */}
+      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+        {/* Record count indicator (Desktop/Tablet) */}
         <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/60 border border-border text-xs text-muted-foreground font-mono">
           <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block" />
           <span>
@@ -74,10 +98,10 @@ export function TopNav({
           variant={showFilters ? 'default' : 'outline'}
           size="sm"
           onClick={onToggleFilters}
-          className="h-9 px-3.5 text-xs font-medium gap-2 rounded-lg transition-all"
+          className="h-8 sm:h-9 px-2.5 sm:px-3.5 text-xs font-medium gap-1.5 sm:gap-2 rounded-lg transition-all"
         >
           <SlidersHorizontal className="h-3.5 w-3.5" />
-          <span>Filters</span>
+          <span className="hidden sm:inline">Filters</span>
           {activeFilterCount > 0 && (
             <span
               className={`h-4 min-w-4 px-1 rounded-full text-[10px] font-bold flex items-center justify-center ${
@@ -91,9 +115,9 @@ export function TopNav({
 
         {/* Export Dropdown */}
         <DropdownMenu>
-          <DropdownMenuTrigger className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-background px-3.5 h-9 text-xs font-medium hover:bg-muted cursor-pointer transition-colors">
+          <DropdownMenuTrigger className="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg border border-border bg-background px-2.5 sm:px-3.5 h-8 sm:h-9 text-xs font-medium hover:bg-muted cursor-pointer transition-colors">
             <Download className="h-3.5 w-3.5 text-muted-foreground" />
-            <span>Export Data</span>
+            <span className="hidden sm:inline">Export</span>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52 p-1.5 rounded-xl shadow-lg border-border">
             <DropdownMenuLabel className="text-[11px] font-semibold text-muted-foreground px-2 py-1.5">

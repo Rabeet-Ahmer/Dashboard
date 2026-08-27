@@ -20,7 +20,8 @@ import {
   FileSpreadsheet,
   ShieldCheck,
   Briefcase,
-  Trash2
+  Trash2,
+  X
 } from 'lucide-react';
 import { SheetCollection } from '@/types/hr';
 
@@ -34,6 +35,8 @@ interface SidebarProps {
   totalRecordsCount: number;
   onOpenUpload: () => void;
   onClearData?: () => void;
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
 export function Sidebar({
@@ -46,6 +49,8 @@ export function Sidebar({
   totalRecordsCount,
   onOpenUpload,
   onClearData,
+  mobileOpen = false,
+  onMobileClose,
 }: SidebarProps) {
   const sheetNames = Object.keys(sheetsData);
 
@@ -83,26 +88,46 @@ export function Sidebar({
     },
   ];
 
-  return (
-    <aside className="w-64 border-r border-border bg-sidebar shrink-0 flex flex-col justify-between h-screen sticky top-0 z-30">
+  const handleNavClick = (id: string) => {
+    onTabChange(id);
+    if (onMobileClose) {
+      onMobileClose();
+    }
+  };
+
+  const sidebarContent = (
+    <div className="flex flex-col justify-between h-full bg-sidebar">
       {/* Top Section: Branding & Sheet Switcher */}
       <div className="p-4 space-y-4">
-        {/* Brand */}
-        <div className="flex items-center gap-2.5 px-1 py-0.5">
-          <div className="h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
-            <Briefcase className="h-4 w-4" />
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="font-bold text-sm tracking-tight text-foreground">
-                Apex HR
-              </span>
-              <span className="text-[10px] font-medium px-1.5 py-0.2 rounded bg-muted text-muted-foreground">
-                Enterprise
-              </span>
+        {/* Brand Header */}
+        <div className="flex items-center justify-between px-1 py-0.5">
+          <div className="flex items-center gap-2.5">
+            <div className="h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
+              <Briefcase className="h-4 w-4" />
             </div>
-            <p className="text-[11px] text-muted-foreground">Workforce Intelligence</p>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-sm tracking-tight text-foreground">
+                  Apex HR
+                </span>
+                <span className="text-[10px] font-medium px-1.5 py-0.2 rounded bg-muted text-muted-foreground">
+                  Enterprise
+                </span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">Workforce Intelligence</p>
+            </div>
           </div>
+
+          {/* Close button on mobile */}
+          {onMobileClose && (
+            <button
+              onClick={onMobileClose}
+              className="lg:hidden p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
+              aria-label="Close menu"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
         </div>
 
         {/* Active Workbook & Sheet Selector */}
@@ -113,12 +138,15 @@ export function Sidebar({
           <div className="border border-border rounded-lg p-2 bg-background space-y-1.5">
             <div className="flex items-center gap-1.5 text-xs font-mono font-medium text-foreground truncate" title={fileName}>
               <FileSpreadsheet className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <span className="truncate">{fileName}</span>
+              <span className="truncate">{fileName || 'No file loaded'}</span>
             </div>
             <Select
               value={activeSheet}
               onValueChange={(val) => {
-                if (val) onSheetChange(val);
+                if (val) {
+                  onSheetChange(val);
+                  if (onMobileClose) onMobileClose();
+                }
               }}
             >
               <SelectTrigger className="h-7 w-full text-xs bg-muted/50 border-border">
@@ -150,8 +178,8 @@ export function Sidebar({
               return (
                 <button
                   key={item.id}
-                  onClick={() => onTabChange(item.id)}
-                  className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium transition-colors text-left cursor-pointer ${
+                  onClick={() => handleNavClick(item.id)}
+                  className={`w-full flex items-center justify-between px-2.5 py-2.5 sm:py-2 rounded-lg text-xs font-medium transition-colors text-left cursor-pointer ${
                     isActive
                       ? 'bg-primary text-primary-foreground shadow-xs'
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted'
@@ -183,8 +211,11 @@ export function Sidebar({
       {/* Bottom Section: Actions & Privacy */}
       <div className="p-4 border-t border-border space-y-2 bg-sidebar">
         <Button
-          onClick={onOpenUpload}
-          className="w-full h-8 text-xs font-medium gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
+          onClick={() => {
+            onOpenUpload();
+            if (onMobileClose) onMobileClose();
+          }}
+          className="w-full h-9 sm:h-8 text-xs font-medium gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
         >
           <UploadCloud className="h-3.5 w-3.5" />
           <span>Upload Another Sheet</span>
@@ -193,8 +224,11 @@ export function Sidebar({
         {onClearData && (
           <Button
             variant="ghost"
-            onClick={onClearData}
-            className="w-full h-7 text-xs font-normal text-muted-foreground hover:text-destructive gap-1.5 cursor-pointer"
+            onClick={() => {
+              onClearData();
+              if (onMobileClose) onMobileClose();
+            }}
+            className="w-full h-8 text-xs font-normal text-muted-foreground hover:text-destructive gap-1.5 cursor-pointer"
           >
             <Trash2 className="h-3 w-3" />
             <span>Unload / Reset Data</span>
@@ -203,9 +237,34 @@ export function Sidebar({
 
         <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground pt-1">
           <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-          <span>Persisted Locally • Zero Cloud</span>
+          <span>SQLite Database • In-Memory</span>
         </div>
       </div>
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      {/* 1. Desktop Persistent Sidebar */}
+      <aside className="hidden lg:flex w-64 border-r border-border bg-sidebar shrink-0 flex-col justify-between h-screen sticky top-0 z-30">
+        {sidebarContent}
+      </aside>
+
+      {/* 2. Mobile Slide-Over Drawer with Backdrop */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in-0 duration-200"
+            onClick={onMobileClose}
+          />
+
+          {/* Drawer Canvas */}
+          <div className="relative w-4/5 max-w-xs h-full bg-sidebar border-r border-border shadow-2xl z-50 flex flex-col transition-transform animate-in slide-in-from-left duration-200">
+            {sidebarContent}
+          </div>
+        </div>
+      )}
+    </>
   );
 }

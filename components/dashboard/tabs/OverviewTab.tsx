@@ -51,46 +51,46 @@ export function OverviewTab({ records }: OverviewTabProps) {
 
   if (!mounted) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Skeleton className="h-[340px] rounded-lg" />
-        <Skeleton className="h-[340px] rounded-lg" />
-        <Skeleton className="h-[340px] rounded-lg lg:col-span-2" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <Skeleton className="h-[280px] sm:h-[340px] rounded-lg" />
+        <Skeleton className="h-[280px] sm:h-[340px] rounded-lg" />
+        <Skeleton className="h-[280px] sm:h-[340px] rounded-lg lg:col-span-2" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Top Row: Regional & Group Headcount */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* 1. Regional Headcount */}
         <Card className="border border-border bg-card shadow-2xs">
-          <CardHeader className="pb-2 border-b border-border/40">
+          <CardHeader className="p-3.5 sm:p-4 pb-2 border-b border-border/40">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-sm font-semibold text-foreground">
+                <CardTitle className="text-xs sm:text-sm font-semibold text-foreground">
                   Regional Workforce Strength
                 </CardTitle>
-                <CardDescription className="text-xs">
+                <CardDescription className="text-[11px] sm:text-xs">
                   Active vs total staff across operating regions
                 </CardDescription>
               </div>
-              <span className="text-[11px] font-mono text-muted-foreground">
+              <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground">
                 REGION
               </span>
             </div>
           </CardHeader>
-          <CardContent className="pt-4">
-            <div className="h-[280px] w-full min-w-0">
+          <CardContent className="p-2 sm:p-4 pt-3 sm:pt-4">
+            <div className="h-[240px] sm:h-[280px] w-full min-w-0">
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                <BarChart data={regionalData} layout="vertical" margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
+                <BarChart data={regionalData} layout="vertical" margin={{ top: 5, right: 15, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.15} horizontal={false} />
-                  <XAxis type="number" tick={{ fontSize: 11 }} />
-                  <YAxis type="category" dataKey="region" tick={{ fontSize: 11 }} width={110} />
+                  <XAxis type="number" tick={{ fontSize: 10 }} />
+                  <YAxis type="category" dataKey="region" tick={{ fontSize: 10 }} width={80} />
                   <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
-                  <Bar dataKey="active" name="Active Staff" fill="#2563eb" radius={[0, 2, 2, 0]} />
-                  <Bar dataKey="count" name="Total Strength" fill="#93c5fd" radius={[0, 2, 2, 0]} />
+                  <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '6px' }} />
+                  <Bar dataKey="active" name="Active" fill="#2563eb" radius={[0, 2, 2, 0]} />
+                  <Bar dataKey="count" name="Total" fill="#93c5fd" radius={[0, 2, 2, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -99,34 +99,34 @@ export function OverviewTab({ records }: OverviewTabProps) {
 
         {/* 2. Group Workforce */}
         <Card className="border border-border bg-card shadow-2xs">
-          <CardHeader className="pb-2 border-b border-border/40">
+          <CardHeader className="p-3.5 sm:p-4 pb-2 border-b border-border/40">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-sm font-semibold text-foreground">
+                <CardTitle className="text-xs sm:text-sm font-semibold text-foreground">
                   Business Group Headcount
                 </CardTitle>
-                <CardDescription className="text-xs">
+                <CardDescription className="text-[11px] sm:text-xs">
                   Staff strength across main business divisions
                 </CardDescription>
               </div>
-              <span className="text-[11px] font-mono text-muted-foreground">
+              <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground">
                 GROUP *
               </span>
             </div>
           </CardHeader>
-          <CardContent className="pt-4">
-            <div className="h-[280px] w-full min-w-0">
+          <CardContent className="p-2 sm:p-4 pt-3 sm:pt-4">
+            <div className="h-[240px] sm:h-[280px] w-full min-w-0">
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                <BarChart data={groupData} margin={{ top: 10, right: 20, left: 0, bottom: 30 }}>
+                <BarChart data={groupData} margin={{ top: 10, right: 10, left: -20, bottom: 35 }}>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
                   <XAxis
                     dataKey="group"
-                    tick={{ fontSize: 10 }}
-                    angle={-20}
+                    tick={{ fontSize: 9 }}
+                    angle={-25}
                     textAnchor="end"
                     interval={0}
                   />
-                  <YAxis tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 10 }} />
                   <Tooltip />
                   <Bar dataKey="count" name="Headcount" fill="#4f46e5" radius={[2, 2, 0, 0]} />
                 </BarChart>
@@ -137,33 +137,33 @@ export function OverviewTab({ records }: OverviewTabProps) {
       </div>
 
       {/* Bottom Row: Hiring Timeline & User Status */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* 3. Hiring Timeline Area Chart */}
         <Card className="border border-border bg-card shadow-2xs lg:col-span-2">
-          <CardHeader className="pb-2 border-b border-border/40">
+          <CardHeader className="p-3.5 sm:p-4 pb-2 border-b border-border/40">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-sm font-semibold text-foreground">
+                <CardTitle className="text-xs sm:text-sm font-semibold text-foreground">
                   Hiring Trends Over Time
                 </CardTitle>
-                <CardDescription className="text-xs">
-                  Annual onboarding volume vs currently retained active staff
+                <CardDescription className="text-[11px] sm:text-xs">
+                  Annual onboarding volume vs retained active staff
                 </CardDescription>
               </div>
-              <span className="text-[11px] font-mono text-muted-foreground">
+              <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground">
                 HIRE_DATE
               </span>
             </div>
           </CardHeader>
-          <CardContent className="pt-4">
-            <div className="h-[280px] w-full min-w-0">
+          <CardContent className="p-2 sm:p-4 pt-3 sm:pt-4">
+            <div className="h-[240px] sm:h-[280px] w-full min-w-0">
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                <AreaChart data={hiringData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <AreaChart data={hiringData} margin={{ top: 10, right: 15, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
-                  <XAxis dataKey="year" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
+                  <XAxis dataKey="year" tick={{ fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 10 }} />
                   <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
+                  <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '6px' }} />
                   <Area
                     type="monotone"
                     dataKey="hires"
@@ -189,23 +189,23 @@ export function OverviewTab({ records }: OverviewTabProps) {
 
         {/* 4. User Status Donut */}
         <Card className="border border-border bg-card shadow-2xs">
-          <CardHeader className="pb-2 border-b border-border/40">
+          <CardHeader className="p-3.5 sm:p-4 pb-2 border-b border-border/40">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-sm font-semibold text-foreground">
+                <CardTitle className="text-xs sm:text-sm font-semibold text-foreground">
                   Employment Status
                 </CardTitle>
-                <CardDescription className="text-xs">
+                <CardDescription className="text-[11px] sm:text-xs">
                   Active vs Attrited breakdown
                 </CardDescription>
               </div>
-              <span className="text-[11px] font-mono text-muted-foreground">
+              <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground">
                 USER STATUS
               </span>
             </div>
           </CardHeader>
-          <CardContent className="pt-4 flex flex-col items-center justify-center">
-            <div className="h-[200px] w-full min-w-0">
+          <CardContent className="p-3 sm:p-4 flex flex-col items-center justify-center">
+            <div className="h-[180px] sm:h-[200px] w-full min-w-0">
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                 <PieChart>
                   <Pie
@@ -214,8 +214,8 @@ export function OverviewTab({ records }: OverviewTabProps) {
                     nameKey="status"
                     cx="50%"
                     cy="50%"
-                    innerRadius={50}
-                    outerRadius={80}
+                    innerRadius={45}
+                    outerRadius={70}
                     paddingAngle={2}
                   >
                     {statusData.map((entry, index) => (
@@ -230,17 +230,17 @@ export function OverviewTab({ records }: OverviewTabProps) {
               </ResponsiveContainer>
             </div>
             {/* Clean Legend Pills */}
-            <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+            <div className="flex flex-wrap items-center justify-center gap-1.5 pt-2">
               {statusData.map((item, idx) => (
-                <div key={item.status} className="flex items-center gap-1.5 text-xs text-muted-foreground px-2 py-0.5 rounded bg-muted/60 border border-border">
+                <div key={item.status} className="flex items-center gap-1 text-[11px] text-muted-foreground px-2 py-0.5 rounded bg-muted/60 border border-border">
                   <span
-                    className="h-2 w-2 rounded-full"
+                    className="h-2 w-2 rounded-full shrink-0"
                     style={{
                       backgroundColor:
                         STATUS_COLORS[item.status] || PIE_COLORS[idx % PIE_COLORS.length]
                     }}
                   />
-                  <span>
+                  <span className="truncate">
                     {item.status}: <strong className="text-foreground font-mono">{item.count}</strong>
                   </span>
                 </div>

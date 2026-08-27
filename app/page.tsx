@@ -60,6 +60,7 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<string>('overview');
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [uploadModalOpen, setUploadModalOpen] = useState<boolean>(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Fetch workforce data from SQLite database
@@ -91,7 +92,6 @@ export default function DashboardPage() {
       fetchWorkforceData(false);
     };
     window.addEventListener('focus', onFocus);
-    // Also poll every 10 seconds in case background watcher updated SQLite
     const timer = setInterval(() => {
       fetchWorkforceData(false);
     }, 10000);
@@ -201,7 +201,7 @@ export default function DashboardPage() {
   // While checking SQLite on initial mount
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="flex items-center gap-2.5 text-xs text-muted-foreground font-mono">
           <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
           <span>Connecting to SQLite database...</span>
@@ -219,7 +219,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
-      {/* 1. Left Sidebar */}
+      {/* 1. Left Sidebar (Responsive with Mobile Drawer) */}
       <Sidebar
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -230,6 +230,8 @@ export default function DashboardPage() {
         totalRecordsCount={Object.values(sheetsData).flat().length}
         onOpenUpload={() => setUploadModalOpen(true)}
         onClearData={handleClearData}
+        mobileOpen={mobileMenuOpen}
+        onMobileClose={() => setMobileMenuOpen(false)}
       />
 
       {/* 2. Main Content Canvas */}
@@ -244,6 +246,7 @@ export default function DashboardPage() {
           showFilters={showFilters}
           onToggleFilters={() => setShowFilters(!showFilters)}
           activeFilterCount={activeFilterCount}
+          onOpenMobileMenu={() => setMobileMenuOpen(true)}
         />
 
         {/* Global Filter Bar (Toggled by Filters button) */}
@@ -257,14 +260,14 @@ export default function DashboardPage() {
         )}
 
         {/* Main Content Area */}
-        <main className="p-8 space-y-6 flex-1 max-w-7xl w-full">
+        <main className="p-3.5 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 flex-1 max-w-7xl w-full">
           {/* Top Page Header Banner */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-1">
             <div>
-              <h2 className="text-xl font-bold tracking-tight text-foreground">
+              <h2 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">
                 {currentTabConfig.title}
               </h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
                 {currentTabConfig.subtitle}
               </p>
             </div>
@@ -274,7 +277,7 @@ export default function DashboardPage() {
           <KPICards metrics={metricsSummary} />
 
           {/* Active Tab View */}
-          <div className="pt-2">
+          <div className="pt-1 sm:pt-2">
             {activeTab === 'overview' && <OverviewTab records={filteredRecords} />}
             {activeTab === 'hierarchy' && <HierarchyTab records={filteredRecords} />}
             {activeTab === 'geographic' && <GeographicTab records={filteredRecords} />}
@@ -286,9 +289,9 @@ export default function DashboardPage() {
         </main>
 
         {/* Footer */}
-        <footer className="border-t border-border py-4 px-8 text-xs text-muted-foreground flex flex-col sm:flex-row items-center justify-between gap-2 bg-sidebar mt-auto">
+        <footer className="border-t border-border py-3.5 px-4 sm:px-8 text-[11px] sm:text-xs text-muted-foreground flex flex-col sm:flex-row items-center justify-between gap-1.5 bg-sidebar mt-auto">
           <span>Apex HR Analytics • Enterprise Workforce Intelligence</span>
-          <span>SQLite Database: data/workforce.db • 28 Schema Attributes</span>
+          <span>SQLite Database: data/workforce.db</span>
         </footer>
       </div>
 

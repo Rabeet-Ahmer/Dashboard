@@ -14,33 +14,33 @@ interface KPICardsProps {
 
 export function KPICards({ metrics }: KPICardsProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
       {/* 1. Total Headcount */}
       <Card className="border border-border bg-card shadow-2xs">
-        <CardContent className="p-4 space-y-2">
+        <CardContent className="p-3.5 sm:p-4 space-y-1.5 sm:space-y-2">
           <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
-            <span>Total Headcount</span>
-            <Badge variant="outline" className="text-[10px] py-0 px-1 font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20">
-              {metrics.activeCount} Active
+            <span className="truncate">Total Headcount</span>
+            <Badge variant="outline" className="text-[10px] py-0 px-1 font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20 shrink-0">
+              {metrics.activeCount} Act
             </Badge>
           </div>
-          <div className="text-2xl font-bold tracking-tight text-foreground font-mono">
+          <div className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-mono">
             {metrics.totalHeadcount.toLocaleString()}
           </div>
-          <p className="text-[11px] text-muted-foreground">
-            {metrics.inactiveCount > 0 ? `${metrics.inactiveCount} inactive / resigned` : '100% Active roster'}
+          <p className="text-[11px] text-muted-foreground truncate">
+            {metrics.inactiveCount > 0 ? `${metrics.inactiveCount} inactive` : '100% Active'}
           </p>
         </CardContent>
       </Card>
 
       {/* 2. Active Workforce Ratio */}
       <Card className="border border-border bg-card shadow-2xs">
-        <CardContent className="p-4 space-y-2">
+        <CardContent className="p-3.5 sm:p-4 space-y-1.5 sm:space-y-2">
           <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1 truncate">
               Active Ratio
               <Tooltip>
-                <TooltipTrigger>
+                <TooltipTrigger className="hidden sm:inline">
                   <Info className="h-3 w-3 text-muted-foreground/70 cursor-pointer" />
                 </TooltipTrigger>
                 <TooltipContent className="text-xs">
@@ -48,11 +48,11 @@ export function KPICards({ metrics }: KPICardsProps) {
                 </TooltipContent>
               </Tooltip>
             </span>
-            <span className="text-[11px] font-mono text-muted-foreground">
+            <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground shrink-0">
               {metrics.activeCount}/{metrics.totalHeadcount}
             </span>
           </div>
-          <div className="text-2xl font-bold tracking-tight text-foreground font-mono">
+          <div className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-mono">
             {metrics.activeRatio}%
           </div>
           <Progress value={metrics.activeRatio} className="h-1 bg-muted" />
@@ -61,12 +61,12 @@ export function KPICards({ metrics }: KPICardsProps) {
 
       {/* 3. Average Tenure */}
       <Card className="border border-border bg-card shadow-2xs">
-        <CardContent className="p-4 space-y-2">
+        <CardContent className="p-3.5 sm:p-4 space-y-1.5 sm:space-y-2">
           <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1 truncate">
               Avg Tenure
               <Tooltip>
-                <TooltipTrigger>
+                <TooltipTrigger className="hidden sm:inline">
                   <Info className="h-3 w-3 text-muted-foreground/70 cursor-pointer" />
                 </TooltipTrigger>
                 <TooltipContent className="text-xs">
@@ -74,25 +74,25 @@ export function KPICards({ metrics }: KPICardsProps) {
                 </TooltipContent>
               </Tooltip>
             </span>
-            <span className="text-[10px] text-muted-foreground font-mono">Years</span>
+            <span className="text-[10px] text-muted-foreground font-mono shrink-0">Years</span>
           </div>
-          <div className="text-2xl font-bold tracking-tight text-foreground font-mono">
-            {metrics.avgTenureYears} <span className="text-sm font-normal text-muted-foreground">yrs</span>
+          <div className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-mono">
+            {metrics.avgTenureYears} <span className="text-xs sm:text-sm font-normal text-muted-foreground">yrs</span>
           </div>
-          <p className="text-[11px] text-muted-foreground">
-            {metrics.avgTenureYears >= 5 ? 'High retention stability' : 'Growing organizational tenure'}
+          <p className="text-[11px] text-muted-foreground truncate">
+            {metrics.avgTenureYears >= 5 ? 'High stability' : 'Growing tenure'}
           </p>
         </CardContent>
       </Card>
 
       {/* 4. Average Age */}
       <Card className="border border-border bg-card shadow-2xs">
-        <CardContent className="p-4 space-y-2">
+        <CardContent className="p-3.5 sm:p-4 space-y-1.5 sm:space-y-2">
           <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1 truncate">
               Avg Age
               <Tooltip>
-                <TooltipTrigger>
+                <TooltipTrigger className="hidden sm:inline">
                   <Info className="h-3 w-3 text-muted-foreground/70 cursor-pointer" />
                 </TooltipTrigger>
                 <TooltipContent className="text-xs">
@@ -100,30 +100,29 @@ export function KPICards({ metrics }: KPICardsProps) {
                 </TooltipContent>
               </Tooltip>
             </span>
-            <span className="text-[10px] text-muted-foreground font-mono">Demographics</span>
+            <span className="text-[10px] text-muted-foreground font-mono shrink-0">Age</span>
           </div>
-          <div className="text-2xl font-bold tracking-tight text-foreground font-mono">
-            {metrics.avgAge} <span className="text-sm font-normal text-muted-foreground">yrs</span>
+          <div className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-mono">
+            {metrics.avgAge} <span className="text-xs sm:text-sm font-normal text-muted-foreground">yrs</span>
           </div>
-          <p className="text-[11px] text-muted-foreground">
-            {metrics.avgAge < 35 ? 'Millennial & Gen-Z core' : 'Experienced workforce'}
+          <p className="text-[11px] text-muted-foreground truncate">
+            {metrics.avgAge < 35 ? 'Millennial/Gen-Z' : 'Experienced'}
           </p>
         </CardContent>
       </Card>
 
       {/* 5. Gender Diversity Ratio */}
       <Card className="border border-border bg-card shadow-2xs">
-        <CardContent className="p-4 space-y-2">
+        <CardContent className="p-3.5 sm:p-4 space-y-1.5 sm:space-y-2">
           <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
-            <span>Diversity (DEI)</span>
-            <span className="text-[11px] font-mono text-muted-foreground">
+            <span className="truncate">Diversity (DEI)</span>
+            <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground shrink-0">
               ♀ {metrics.genderRatio.femalePercent}%
             </span>
           </div>
-          <div className="text-2xl font-bold tracking-tight text-foreground font-mono">
-            {metrics.genderRatio.femalePercent}% <span className="text-xs font-normal text-muted-foreground font-sans">Female</span>
+          <div className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-mono">
+            {metrics.genderRatio.femalePercent}% <span className="text-[11px] sm:text-xs font-normal text-muted-foreground font-sans">Female</span>
           </div>
-          {/* Subtle dual bar */}
           <div className="h-1 w-full bg-blue-600 rounded-full overflow-hidden flex">
             <div
               className="bg-rose-500 h-full"
@@ -135,18 +134,18 @@ export function KPICards({ metrics }: KPICardsProps) {
 
       {/* 6. Network Reach */}
       <Card className="border border-border bg-card shadow-2xs">
-        <CardContent className="p-4 space-y-2">
+        <CardContent className="p-3.5 sm:p-4 space-y-1.5 sm:space-y-2">
           <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
-            <span>Branch Footprint</span>
-            <span className="text-[10px] font-mono text-muted-foreground">
+            <span className="truncate">Footprint</span>
+            <span className="text-[10px] font-mono text-muted-foreground shrink-0">
               {metrics.uniqueRegionsCount} Regions
             </span>
           </div>
-          <div className="text-2xl font-bold tracking-tight text-foreground font-mono">
-            {metrics.uniqueBranchesCount} <span className="text-sm font-normal text-muted-foreground">branches</span>
+          <div className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-mono">
+            {metrics.uniqueBranchesCount} <span className="text-xs sm:text-sm font-normal text-muted-foreground">branches</span>
           </div>
           <p className="text-[11px] text-muted-foreground truncate">
-            {metrics.uniqueClustersCount} operational clusters
+            {metrics.uniqueClustersCount} clusters
           </p>
         </CardContent>
       </Card>
