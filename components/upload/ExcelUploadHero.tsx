@@ -1,10 +1,8 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { parseExcelWorkbook } from '@/lib/excel-parser';
 import { SheetCollection } from '@/types/hr';
 import {
   UploadCloud,
@@ -12,7 +10,8 @@ import {
   AlertCircle,
   ShieldCheck,
   CheckCircle2,
-  TableProperties
+  TableProperties,
+  Database
 } from 'lucide-react';
 
 interface ExcelUploadHeroProps {
@@ -33,31 +32,34 @@ export function ExcelUploadHero({ onDataLoaded }: ExcelUploadHeroProps) {
     }
 
     setLoading(true);
-    setProgress(30);
+    setProgress(20);
     setError(null);
 
     try {
-      const buffer = await file.arrayBuffer();
-      setProgress(70);
+      const formData = new FormData();
+      formData.append('file', file);
+      setProgress(50);
 
-      const parsedSheets = parseExcelWorkbook(buffer);
-      setProgress(95);
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      });
 
-      const sheetNames = Object.keys(parsedSheets);
-      if (sheetNames.length === 0) {
-        setError('No rows or sheets found in the uploaded workbook.');
-        setLoading(false);
-        return;
+      setProgress(85);
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Failed to process spreadsheet file');
       }
 
       setProgress(100);
       setTimeout(() => {
-        onDataLoaded(parsedSheets, file.name);
+        onDataLoaded(json.sheets, json.fileName);
         setLoading(false);
       }, 300);
     } catch (err: any) {
-      console.error('Error parsing Excel file:', err);
-      setError(err?.message || 'Failed to parse Excel file. Please ensure it is not corrupt or password-protected.');
+      console.error('Error uploading Excel file:', err);
+      setError(err?.message || 'Failed to process Excel file.');
       setLoading(false);
     }
   };
@@ -82,14 +84,14 @@ export function ExcelUploadHero({ onDataLoaded }: ExcelUploadHeroProps) {
         {/* Header Branding */}
         <div className="text-center space-y-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted border border-border text-xs font-medium text-muted-foreground">
-            <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>100% Client-Side In-Memory Engine • Zero Server Storage</span>
+            <Database className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+            <span>Local SQLite Database Engine • Persistent & Fast</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
             Enterprise Workforce Analytics
           </h1>
           <p className="text-sm text-muted-foreground max-w-lg mx-auto">
-            Upload your multi-sheet HR Excel workbook to instantly generate executive KPIs, hierarchy breakdowns, geographic mapping, and employee directories.
+            Upload your multi-sheet HR Excel workbook or link it with the background watcher to auto-sync directly into SQLite.
           </p>
         </div>
 
@@ -140,7 +142,7 @@ export function ExcelUploadHero({ onDataLoaded }: ExcelUploadHeroProps) {
               .CSV
             </Badge>
             <Badge variant="secondary" className="text-xs font-normal text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20">
-              <CheckCircle2 className="h-3 w-3 mr-1" /> Multi-Sheet Supported
+              <CheckCircle2 className="h-3 w-3 mr-1" /> SQLite Synced
             </Badge>
           </div>
         </div>
@@ -149,7 +151,7 @@ export function ExcelUploadHero({ onDataLoaded }: ExcelUploadHeroProps) {
         {loading && (
           <div className="space-y-2 rounded-xl border border-border bg-card p-4 shadow-2xs">
             <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
-              <span>Parsing sheets and aggregating workforce metrics...</span>
+              <span>Storing spreadsheet data into SQLite database...</span>
               <span className="font-mono">{progress}%</span>
             </div>
             <Progress value={progress} className="h-1.5" />
@@ -164,14 +166,14 @@ export function ExcelUploadHero({ onDataLoaded }: ExcelUploadHeroProps) {
           </div>
         )}
 
-        {/* 28 Schema Fields Info */}
+        {/* Auto-Sync Tip */}
         <div className="border border-border rounded-xl p-4 bg-muted/20 space-y-2 text-xs text-muted-foreground">
           <div className="flex items-center gap-1.5 font-semibold text-foreground">
             <TableProperties className="h-4 w-4 text-muted-foreground" />
-            <span>Expected Schema Fields</span>
+            <span>Real-Time Excel Auto-Sync</span>
           </div>
           <p className="text-[11px] leading-relaxed">
-            EMPLOYEE_NUMBER, FULL NAME, USER STATUS, GROUP, SUB GROUP, DATE_OF_BIRTH, HIRE_DATE, BRANCH_CODE, CADRE, GRADE, LOCATION_CODE, FLAGSHIP, BRANCH_CATEGORY, REGION, CLUS, JOB, Pos_name, SUPERVISOR, GENDER, EMPL, EMAIL_ADDRESS, etc.
+            Run <code className="font-mono bg-muted px-1.5 py-0.5 rounded text-foreground">npm run watch-excel "path/to/your/file.xlsx"</code> in your terminal to automatically update the dashboard every time you press <strong>Ctrl + S</strong> in Microsoft Excel!
           </p>
         </div>
       </div>

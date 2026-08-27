@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "watch-excel": "node scripts/watch-excel.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

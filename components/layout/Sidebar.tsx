@@ -19,7 +19,8 @@ import {
   UploadCloud,
   FileSpreadsheet,
   ShieldCheck,
-  Briefcase
+  Briefcase,
+  Trash2
 } from 'lucide-react';
 import { SheetCollection } from '@/types/hr';
 
@@ -32,6 +33,7 @@ interface SidebarProps {
   fileName: string;
   totalRecordsCount: number;
   onOpenUpload: () => void;
+  onClearData?: () => void;
 }
 
 export function Sidebar({
@@ -43,6 +45,7 @@ export function Sidebar({
   fileName,
   totalRecordsCount,
   onOpenUpload,
+  onClearData,
 }: SidebarProps) {
   const sheetNames = Object.keys(sheetsData);
 
@@ -178,18 +181,29 @@ export function Sidebar({
       </div>
 
       {/* Bottom Section: Actions & Privacy */}
-      <div className="p-4 border-t border-border space-y-2.5 bg-sidebar">
+      <div className="p-4 border-t border-border space-y-2 bg-sidebar">
         <Button
           onClick={onOpenUpload}
-          className="w-full h-8 text-xs font-medium gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
+          className="w-full h-8 text-xs font-medium gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
         >
           <UploadCloud className="h-3.5 w-3.5" />
           <span>Upload Another Sheet</span>
         </Button>
 
+        {onClearData && (
+          <Button
+            variant="ghost"
+            onClick={onClearData}
+            className="w-full h-7 text-xs font-normal text-muted-foreground hover:text-destructive gap-1.5 cursor-pointer"
+          >
+            <Trash2 className="h-3 w-3" />
+            <span>Unload / Reset Data</span>
+          </Button>
+        )}
+
         <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground pt-1">
           <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-          <span>Zero-Database • In-Browser</span>
+          <span>Persisted Locally • Zero Cloud</span>
         </div>
       </div>
     </aside>

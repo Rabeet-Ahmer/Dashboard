@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -29,7 +30,10 @@ import {
   Download,
   Eye,
   Copy,
-  Check
+  Check,
+  Search,
+  X,
+  Users
 } from 'lucide-react';
 import { exportRecordsToExcel, exportRecordsToCSV } from '@/lib/excel-parser';
 
@@ -42,6 +46,7 @@ type SortField = 'fullName' | 'employeeNumber' | 'userStatus' | 'group' | 'grade
 type SortOrder = 'asc' | 'desc';
 
 export function EmployeeExplorerTab({ records, activeSheetName }: EmployeeExplorerTabProps) {
+  const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
   const [sortField, setSortField] = useState<SortField>('fullName');
@@ -50,9 +55,25 @@ export function EmployeeExplorerTab({ records, activeSheetName }: EmployeeExplor
   const [modalOpen, setModalOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  // Filter by local search query
+  const searchedRecords = useMemo(() => {
+    if (!searchQuery.trim()) return records;
+    const query = searchQuery.toLowerCase().trim();
+    return records.filter((r) => {
+      const matchesName = (r.fullName || '').toLowerCase().includes(query);
+      const matchesId = (r.employeeNumber || '').toLowerCase().includes(query);
+      const matchesPos = (r.positionName || '').toLowerCase().includes(query) || (r.job || '').toLowerCase().includes(query);
+      const matchesBranch = (r.branchCode || '').toLowerCase().includes(query);
+      const matchesEmail = (r.emailAddress || '').toLowerCase().includes(query);
+      const matchesGroup = (r.group || '').toLowerCase().includes(query);
+      const matchesRegion = (r.region || '').toLowerCase().includes(query);
+      return matchesName || matchesId || matchesPos || matchesBranch || matchesEmail || matchesGroup || matchesRegion;
+    });
+  }, [records, searchQuery]);
+
   // Sorting
   const sortedRecords = useMemo(() => {
-    return [...records].sort((a, b) => {
+    return [...searchedRecords].sort((a, b) => {
       let valA: any = a[sortField];
       let valB: any = b[sortField];
 
@@ -66,7 +87,7 @@ export function EmployeeExplorerTab({ records, activeSheetName }: EmployeeExplor
       valB = valB || 0;
       return sortOrder === 'asc' ? valA - valB : valB - valA;
     });
-  }, [records, sortField, sortOrder]);
+  }, [searchedRecords, sortField, sortOrder]);
 
   // Pagination
   const totalPages = Math.max(1, Math.ceil(sortedRecords.length / pageSize));
@@ -100,37 +121,62 @@ export function EmployeeExplorerTab({ records, activeSheetName }: EmployeeExplor
   return (
     <div className="space-y-4">
       <Card className="border border-border bg-card shadow-2xs">
-        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border/40">
+        <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-border/40">
           <div>
-            <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <span>Employee Directory & Records</span>
+            <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
+              <Users className="h-4 w-4 text-primary" />
+              <span>Employee Directory & Roster</span>
               <Badge variant="secondary" className="text-xs font-mono font-normal">
-                {records.length} {records.length === 1 ? 'Record' : 'Records'}
+                {searchedRecords.length} of {records.length} Records
               </Badge>
             </CardTitle>
             <CardDescription className="text-xs mt-0.5">
-              Click any row to open the complete 28-field employee dossier
+              Search, sort, and click any employee row to open their full 28-field profile dossier
             </CardDescription>
           </div>
 
-          <div className="flex items-center gap-2 self-end sm:self-auto">
+          {/* Directory Search & Export Actions */}
+          <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+            {/* Search Input */}
+            <div className="relative flex-1 sm:w-72">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search by name, ID, role, branch..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="pl-9 pr-8 h-9 text-xs bg-muted/40 border-border rounded-lg"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
             <Button
               variant="outline"
               size="sm"
-              onClick={() => exportRecordsToExcel(records, `HR_Explorer_${activeSheetName}.xlsx`)}
-              className="h-8 text-xs gap-1.5"
+              onClick={() => exportRecordsToExcel(searchedRecords, `HR_Explorer_${activeSheetName}.xlsx`)}
+              className="h-9 text-xs gap-1.5 rounded-lg"
             >
               <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
-              <span>Export Excel</span>
+              <span className="hidden sm:inline">Export Excel</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => exportRecordsToCSV(records, `HR_Explorer_${activeSheetName}.csv`)}
-              className="h-8 text-xs gap-1.5"
+              onClick={() => exportRecordsToCSV(searchedRecords, `HR_Explorer_${activeSheetName}.csv`)}
+              className="h-9 text-xs gap-1.5 rounded-lg"
             >
               <Download className="h-3.5 w-3.5 text-blue-600" />
-              <span>Export CSV</span>
+              <span className="hidden sm:inline">Export CSV</span>
             </Button>
           </div>
         </CardHeader>
@@ -142,7 +188,7 @@ export function EmployeeExplorerTab({ records, activeSheetName }: EmployeeExplor
                 <TableRow className="text-xs hover:bg-transparent">
                   <TableHead className="w-[120px] cursor-pointer font-semibold" onClick={() => handleSort('employeeNumber')}>
                     <div className="flex items-center gap-1.5">
-                      <span>ID</span>
+                      <span>EMP ID</span>
                       <ArrowUpDown className="h-3 w-3 opacity-50" />
                     </div>
                   </TableHead>
@@ -200,7 +246,7 @@ export function EmployeeExplorerTab({ records, activeSheetName }: EmployeeExplor
                   </TableRow>
                 ) : (
                   paginatedRecords.map((emp) => {
-                    const isActive = emp.userStatus.toLowerCase().includes('active');
+                    const isActive = (emp.userStatus || '').toLowerCase().includes('active');
 
                     return (
                       <TableRow

@@ -2,10 +2,8 @@
 
 import React, { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { parseExcelWorkbook } from '@/lib/excel-parser';
 import { SheetCollection } from '@/types/hr';
 import { UploadCloud, FileSpreadsheet, AlertCircle } from 'lucide-react';
 
@@ -33,32 +31,35 @@ export function ExcelDropzoneModal({
     }
 
     setLoading(true);
-    setProgress(30);
+    setProgress(20);
     setError(null);
 
     try {
-      const buffer = await file.arrayBuffer();
-      setProgress(70);
+      const formData = new FormData();
+      formData.append('file', file);
+      setProgress(50);
 
-      const parsedSheets = parseExcelWorkbook(buffer);
-      setProgress(95);
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      });
 
-      const sheetNames = Object.keys(parsedSheets);
-      if (sheetNames.length === 0) {
-        setError('No rows or sheets found in the uploaded workbook.');
-        setLoading(false);
-        return;
+      setProgress(85);
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Failed to process spreadsheet file');
       }
 
       setProgress(100);
       setTimeout(() => {
-        onDataLoaded(parsedSheets, file.name);
+        onDataLoaded(json.sheets, json.fileName);
         setLoading(false);
         onOpenChange(false);
       }, 300);
     } catch (err: any) {
-      console.error('Error parsing Excel file:', err);
-      setError(err?.message || 'Failed to parse Excel file. Please ensure it is not corrupt.');
+      console.error('Error uploading Excel file:', err);
+      setError(err?.message || 'Failed to upload and save Excel file.');
       setLoading(false);
     }
   };
@@ -83,10 +84,10 @@ export function ExcelDropzoneModal({
         <DialogHeader className="pb-2">
           <DialogTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
             <FileSpreadsheet className="h-5 w-5 text-primary" />
-            Upload HR Excel Workbook
+            Upload HR Excel Workbook to SQLite
           </DialogTitle>
           <DialogDescription className="text-xs">
-            Select a new single or multi-sheet Excel file. Ingested 100% locally in browser memory.
+            Select a new single or multi-sheet Excel file. Ingested directly into local SQLite database.
           </DialogDescription>
         </DialogHeader>
 
@@ -144,7 +145,7 @@ export function ExcelDropzoneModal({
           {loading && (
             <div className="space-y-2 rounded-lg border border-border bg-muted/30 p-3">
               <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
-                <span>Reading sheets and computing metrics...</span>
+                <span>Saving records to SQLite database...</span>
                 <span className="font-mono">{progress}%</span>
               </div>
               <Progress value={progress} className="h-1.5" />

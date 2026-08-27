@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { SheetCollection, HRFilterState } from '@/types/hr';
 import { computeHRMetricsSummary } from '@/lib/analytics';
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -30,12 +30,27 @@ const INITIAL_FILTERS: HRFilterState = {
   branchCategory: 'ALL'
 };
 
-const TAB_TITLES: Record<string, string> = {
-  overview: 'Executive Overview',
-  hierarchy: 'Organization & Cadres',
-  geographic: 'Geography & Branches',
-  diversity: 'Demographics (DEI)',
-  explorer: 'Employee Directory',
+const TAB_CONFIGS: Record<string, { title: string; subtitle: string }> = {
+  overview: {
+    title: 'Executive Overview',
+    subtitle: 'High-level workforce health, regional headcount strength, and onboarding velocity.'
+  },
+  hierarchy: {
+    title: 'Organization & Cadres',
+    subtitle: 'Hierarchical breakdown across job grades, staff cadres, and leadership span of control.'
+  },
+  geographic: {
+    title: 'Geography & Branches',
+    subtitle: 'Branch network distribution, cluster concentration, and flagship hub staffing.'
+  },
+  diversity: {
+    title: 'Demographics & Diversity (DEI)',
+    subtitle: 'Gender balance across leadership tiers, generational age cohorts, and tenure retention.'
+  },
+  explorer: {
+    title: 'Employee Directory',
+    subtitle: 'Searchable employee master roster with full 28-attribute profile dossiers.'
+  },
 };
 
 export default function DashboardPage() {
@@ -43,8 +58,49 @@ export default function DashboardPage() {
   const [fileName, setFileName] = useState<string>('');
   const [filters, setFilters] = useState<HRFilterState>(INITIAL_FILTERS);
   const [activeTab, setActiveTab] = useState<string>('overview');
-  const [showFilters, setShowFilters] = useState<boolean>(true);
+  const [showFilters, setShowFilters] = useState<boolean>(false);
   const [uploadModalOpen, setUploadModalOpen] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Fetch workforce data from SQLite database
+  const fetchWorkforceData = useCallback(async (isInitial = false) => {
+    try {
+      const res = await fetch('/api/workforce');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data && json.data.totalCount > 0) {
+          setSheetsData(json.data.sheets);
+          setFileName(json.data.fileName);
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to fetch workforce data from SQLite:', e);
+    } finally {
+      if (isInitial) setIsLoading(false);
+    }
+  }, []);
+
+  // Initial fetch on mount
+  useEffect(() => {
+    fetchWorkforceData(true);
+  }, [fetchWorkforceData]);
+
+  // Auto-sync when window regains focus (e.g. after editing & saving in Excel)
+  useEffect(() => {
+    const onFocus = () => {
+      fetchWorkforceData(false);
+    };
+    window.addEventListener('focus', onFocus);
+    // Also poll every 10 seconds in case background watcher updated SQLite
+    const timer = setInterval(() => {
+      fetchWorkforceData(false);
+    }, 10000);
+
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      clearInterval(timer);
+    };
+  }, [fetchWorkforceData]);
 
   const hasData = Object.keys(sheetsData).length > 0;
 
@@ -57,25 +113,10 @@ export default function DashboardPage() {
     return sheetsData[filters.sheet] || [];
   }, [sheetsData, filters.sheet, hasData]);
 
-  // Filtered records based on all active dropdowns & search query
+  // Filtered records based on all active dropdowns
   const filteredRecords = useMemo(() => {
     if (!hasData) return [];
     return currentSheetRecords.filter((r) => {
-      // Search
-      if (filters.search.trim()) {
-        const query = filters.search.toLowerCase().trim();
-        const matchesName = (r.fullName || '').toLowerCase().includes(query);
-        const matchesId = (r.employeeNumber || '').toLowerCase().includes(query);
-        const matchesPos = (r.positionName || '').toLowerCase().includes(query) || (r.job || '').toLowerCase().includes(query);
-        const matchesBranch = (r.branchCode || '').toLowerCase().includes(query);
-        const matchesEmail = (r.emailAddress || '').toLowerCase().includes(query);
-        const matchesGroup = (r.group || '').toLowerCase().includes(query);
-
-        if (!matchesName && !matchesId && !matchesPos && !matchesBranch && !matchesEmail && !matchesGroup) {
-          return false;
-        }
-      }
-
       // Region
       if (filters.region !== 'ALL' && r.region !== filters.region) return false;
 
@@ -123,12 +164,24 @@ export default function DashboardPage() {
     }).length;
   }, [filters]);
 
-  // Handler when Excel file is parsed
+  // Handler when Excel file is parsed and saved to SQLite
   const handleDataLoaded = (newSheets: SheetCollection, newFileName: string) => {
     setSheetsData(newSheets);
     setFileName(newFileName);
     setFilters(INITIAL_FILTERS);
     setActiveTab('overview');
+  };
+
+  // Handler to clear/unload dataset from SQLite
+  const handleClearData = async () => {
+    try {
+      await fetch('/api/workforce', { method: 'DELETE' });
+      setSheetsData({});
+      setFileName('');
+      setFilters(INITIAL_FILTERS);
+    } catch (err) {
+      console.error('Error clearing data:', err);
+    }
   };
 
   const handleFilterChange = (key: keyof HRFilterState, value: string) => {
@@ -141,15 +194,28 @@ export default function DashboardPage() {
   const handleResetFilters = () => {
     setFilters((prev) => ({
       ...INITIAL_FILTERS,
-      sheet: prev.sheet,
-      search: prev.search
+      sheet: prev.sheet
     }));
   };
+
+  // While checking SQLite on initial mount
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex items-center gap-2.5 text-xs text-muted-foreground font-mono">
+          <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+          <span>Connecting to SQLite database...</span>
+        </div>
+      </div>
+    );
+  }
 
   // If no file loaded yet, render dedicated upload screen
   if (!hasData) {
     return <ExcelUploadHero onDataLoaded={handleDataLoaded} />;
   }
+
+  const currentTabConfig = TAB_CONFIGS[activeTab] || TAB_CONFIGS.overview;
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
@@ -163,25 +229,24 @@ export default function DashboardPage() {
         fileName={fileName}
         totalRecordsCount={Object.values(sheetsData).flat().length}
         onOpenUpload={() => setUploadModalOpen(true)}
+        onClearData={handleClearData}
       />
 
       {/* 2. Main Content Canvas */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
-        {/* Top Bar */}
+        {/* Top Navigation Bar */}
         <TopNav
-          activeTabTitle={TAB_TITLES[activeTab] || 'Overview'}
+          activeTabTitle={currentTabConfig.title}
           activeSheetName={filters.sheet}
           filteredCount={filteredRecords.length}
           totalCount={currentSheetRecords.length}
           filteredRecords={filteredRecords}
-          searchQuery={filters.search}
-          onSearchChange={(query) => handleFilterChange('search', query)}
           showFilters={showFilters}
           onToggleFilters={() => setShowFilters(!showFilters)}
           activeFilterCount={activeFilterCount}
         />
 
-        {/* Global Filter Bar (Collapsible) */}
+        {/* Global Filter Bar (Toggled by Filters button) */}
         {showFilters && (
           <GlobalFilterBar
             allRecords={currentSheetRecords}
@@ -191,8 +256,20 @@ export default function DashboardPage() {
           />
         )}
 
-        {/* Main Body */}
-        <main className="p-6 space-y-6 flex-1 max-w-7xl w-full">
+        {/* Main Content Area */}
+        <main className="p-8 space-y-6 flex-1 max-w-7xl w-full">
+          {/* Top Page Header Banner */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2">
+            <div>
+              <h2 className="text-xl font-bold tracking-tight text-foreground">
+                {currentTabConfig.title}
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {currentTabConfig.subtitle}
+              </p>
+            </div>
+          </div>
+
           {/* Top 6 KPI Metric Cards */}
           <KPICards metrics={metricsSummary} />
 
@@ -209,9 +286,9 @@ export default function DashboardPage() {
         </main>
 
         {/* Footer */}
-        <footer className="border-t border-border py-4 px-6 text-xs text-muted-foreground flex flex-col sm:flex-row items-center justify-between gap-2 bg-sidebar mt-auto">
+        <footer className="border-t border-border py-4 px-8 text-xs text-muted-foreground flex flex-col sm:flex-row items-center justify-between gap-2 bg-sidebar mt-auto">
           <span>Apex HR Analytics • Enterprise Workforce Intelligence</span>
-          <span>Zero-Database Client-Side Parsing • 28 Schema Attributes</span>
+          <span>SQLite Database: data/workforce.db • 28 Schema Attributes</span>
         </footer>
       </div>
 
