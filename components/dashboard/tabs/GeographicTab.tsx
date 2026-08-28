@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { EmployeeRecord } from '@/types/hr';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollableChartContainer } from '@/components/dashboard/ScrollableChartContainer';
 import {
   getBranchCategoryDistribution,
   getFlagshipDistribution
@@ -30,7 +31,8 @@ const FLAGSHIP_COLORS: Record<string, string> = {
   'Yes (Flagship)': '#2563eb',
   'Headquarters': '#7c3aed',
   'Corporate Center': '#0284c7',
-  'Standard': '#71717a'
+  'Standard': '#71717a',
+  'N/A': '#9ca3af'
 };
 
 export function GeographicTab({ records }: GeographicTabProps) {
@@ -40,11 +42,11 @@ export function GeographicTab({ records }: GeographicTabProps) {
   const categoryData = React.useMemo(() => getBranchCategoryDistribution(records), [records]);
   const flagshipData = React.useMemo(() => getFlagshipDistribution(records), [records]);
 
-  // Top 10 Branches by employee count
+  // Top Branches by employee count
   const topBranches = React.useMemo(() => {
     const map: Record<string, { branchCode: string; region: string; cluster: string; count: number; category: string }> = {};
     for (const r of records) {
-      const code = r.branchCode || 'BR-Unknown';
+      const code = r.branchCode && r.branchCode !== 'N/A' ? r.branchCode : 'Unassigned';
       if (!map[code]) {
         map[code] = {
           branchCode: code,
@@ -56,20 +58,20 @@ export function GeographicTab({ records }: GeographicTabProps) {
       }
       map[code].count++;
     }
-    return Object.values(map).sort((a, b) => b.count - a.count).slice(0, 10);
+    return Object.values(map).sort((a, b) => b.count - a.count);
   }, [records]);
 
   // Cluster distribution
   const clusterData = React.useMemo(() => {
     const map: Record<string, { cluster: string; region: string; count: number }> = {};
     for (const r of records) {
-      const clus = r.cluster || 'General';
+      const clus = r.cluster && r.cluster !== 'N/A' ? r.cluster : 'Unassigned';
       if (!map[clus]) {
         map[clus] = { cluster: clus, region: r.region, count: 0 };
       }
       map[clus].count++;
     }
-    return Object.values(map).sort((a, b) => b.count - a.count).slice(0, 10);
+    return Object.values(map).sort((a, b) => b.count - a.count);
   }, [records]);
 
   if (!mounted) {
@@ -88,20 +90,18 @@ export function GeographicTab({ records }: GeographicTabProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* 1. Branch Category */}
         <Card className="border border-border bg-card shadow-2xs">
-          <CardHeader className="p-3.5 sm:p-4 pb-2 border-b border-border/40">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-xs sm:text-sm font-semibold text-foreground">
-                  Branch Category Distribution
-                </CardTitle>
-                <CardDescription className="text-[11px] sm:text-xs">
-                  Urban, Commercial, Rural, and Islamic branch network
-                </CardDescription>
-              </div>
-              <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground">
-                BRANCH_CATEGORY
-              </span>
+          <CardHeader className="p-3.5 sm:p-4 pb-2 border-b border-border/40 flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-xs sm:text-sm font-semibold text-foreground">
+                Branch Category Distribution
+              </CardTitle>
+              <CardDescription className="text-[11px] sm:text-xs">
+                Urban, Commercial, Rural, and Islamic branch network
+              </CardDescription>
             </div>
+            <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground">
+              BRANCH_CATEGORY
+            </span>
           </CardHeader>
           <CardContent className="p-2 sm:p-4 pt-3 sm:pt-4">
             <div className="h-[240px] sm:h-[280px] w-full min-w-0">
@@ -120,20 +120,18 @@ export function GeographicTab({ records }: GeographicTabProps) {
 
         {/* 2. Flagship vs Standard */}
         <Card className="border border-border bg-card shadow-2xs">
-          <CardHeader className="p-3.5 sm:p-4 pb-2 border-b border-border/40">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-xs sm:text-sm font-semibold text-foreground">
-                  Flagship vs Standard Locations
-                </CardTitle>
-                <CardDescription className="text-[11px] sm:text-xs">
-                  Headquarters and flagship hub staff concentration
-                </CardDescription>
-              </div>
-              <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground">
-                FLAGSHIP
-              </span>
+          <CardHeader className="p-3.5 sm:p-4 pb-2 border-b border-border/40 flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-xs sm:text-sm font-semibold text-foreground">
+                Flagship vs Standard Locations
+              </CardTitle>
+              <CardDescription className="text-[11px] sm:text-xs">
+                Headquarters and flagship hub staff concentration
+              </CardDescription>
             </div>
+            <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground">
+              FLAGSHIP
+            </span>
           </CardHeader>
           <CardContent className="p-3 sm:p-4 flex flex-col items-center justify-center">
             <div className="h-[170px] sm:h-[200px] w-full min-w-0">
@@ -162,7 +160,7 @@ export function GeographicTab({ records }: GeographicTabProps) {
             </div>
             <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
               {flagshipData.map((item, idx) => (
-                <div key={item.flagship} className="flex items-center gap-1 text-[11px] text-muted-foreground px-2 py-0.5 rounded bg-muted/60 border border-border">
+                <div key={`flagship-${item.flagship}-${idx}`} className="flex items-center gap-1 text-[11px] text-muted-foreground px-2 py-0.5 rounded bg-muted/60 border border-border">
                   <span
                     className="h-2 w-2 rounded-full shrink-0"
                     style={{
@@ -182,67 +180,77 @@ export function GeographicTab({ records }: GeographicTabProps) {
 
       {/* Row 2: Top Staffed Branches & Top Clusters */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        {/* Top 10 Branches */}
+        {/* Top Branches (Scrollable) */}
         <Card className="border border-border bg-card shadow-2xs">
-          <CardHeader className="p-3.5 sm:p-4 pb-2 border-b border-border/40">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-xs sm:text-sm font-semibold text-foreground">
-                  Top Staffed Branches
-                </CardTitle>
-                <CardDescription className="text-[11px] sm:text-xs">
-                  Branches with highest employee headcount
-                </CardDescription>
-              </div>
-              <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground">
-                BRANCH_CODE *
-              </span>
+          <CardHeader className="p-3.5 sm:p-4 pb-2 border-b border-border/40 flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-xs sm:text-sm font-semibold text-foreground">
+                Staffed Branch Network
+              </CardTitle>
+              <CardDescription className="text-[11px] sm:text-xs">
+                Headcount across operational branch locations ({topBranches.length} Branches)
+              </CardDescription>
             </div>
+            <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground">
+              BRANCH_CODE
+            </span>
           </CardHeader>
           <CardContent className="p-2 sm:p-4 pt-3 sm:pt-4">
-            <div className="h-[240px] sm:h-[280px] w-full min-w-0">
+            <ScrollableChartContainer
+              dataLength={topBranches.length}
+              itemHeight={36}
+              minHeight={250}
+              maxViewportHeight={280}
+              threshold={6}
+              itemName="branches"
+            >
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                 <BarChart data={topBranches} layout="vertical" margin={{ top: 5, right: 15, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.15} horizontal={false} />
                   <XAxis type="number" tick={{ fontSize: 10 }} />
-                  <YAxis type="category" dataKey="branchCode" tick={{ fontSize: 9 }} width={75} />
+                  <YAxis type="category" dataKey="branchCode" tick={{ fontSize: 9 }} width={90} interval={0} />
                   <Tooltip />
-                  <Bar dataKey="count" name="Staff Count" fill="#2563eb" radius={[0, 2, 2, 0]} />
+                  <Bar dataKey="count" name="Staff Count" fill="#2563eb" radius={[0, 2, 2, 0]} maxBarSize={16} />
                 </BarChart>
               </ResponsiveContainer>
-            </div>
+            </ScrollableChartContainer>
           </CardContent>
         </Card>
 
-        {/* Top Clusters */}
+        {/* Clusters (Scrollable) */}
         <Card className="border border-border bg-card shadow-2xs">
-          <CardHeader className="p-3.5 sm:p-4 pb-2 border-b border-border/40">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-xs sm:text-sm font-semibold text-foreground">
-                  Cluster Workforce Distribution
-                </CardTitle>
-                <CardDescription className="text-[11px] sm:text-xs">
-                  Staff strength across operational sub-regions
-                </CardDescription>
-              </div>
-              <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground">
-                CLUS
-              </span>
+          <CardHeader className="p-3.5 sm:p-4 pb-2 border-b border-border/40 flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-xs sm:text-sm font-semibold text-foreground">
+                Cluster Workforce Distribution
+              </CardTitle>
+              <CardDescription className="text-[11px] sm:text-xs">
+                Staff strength across operational sub-regions ({clusterData.length} Clusters)
+              </CardDescription>
             </div>
+            <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground">
+              CLUS
+            </span>
           </CardHeader>
           <CardContent className="p-2 sm:p-4 pt-3 sm:pt-4">
-            <div className="h-[240px] sm:h-[280px] w-full min-w-0">
+            <ScrollableChartContainer
+              dataLength={clusterData.length}
+              itemHeight={36}
+              minHeight={250}
+              maxViewportHeight={280}
+              threshold={6}
+              itemName="clusters"
+            >
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                 <BarChart data={clusterData} layout="vertical" margin={{ top: 5, right: 15, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.15} horizontal={false} />
                   <XAxis type="number" tick={{ fontSize: 10 }} />
-                  <YAxis type="category" dataKey="cluster" tick={{ fontSize: 9 }} width={100} />
+                  <YAxis type="category" dataKey="cluster" tick={{ fontSize: 9 }} width={120} interval={0} />
                   <Tooltip />
-                  <Bar dataKey="count" name="Employees" fill="#4f46e5" radius={[0, 2, 2, 0]} />
+                  <Bar dataKey="count" name="Employees" fill="#4f46e5" radius={[0, 2, 2, 0]} maxBarSize={16} />
                 </BarChart>
               </ResponsiveContainer>
-            </div>
+            </ScrollableChartContainer>
           </CardContent>
         </Card>
       </div>
