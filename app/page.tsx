@@ -26,8 +26,9 @@ const INITIAL_FILTERS: HRFilterState = {
   cadre: 'ALL',
   userStatus: 'ALL',
   gender: 'ALL',
-  employmentType: 'ALL',
-  branchCategory: 'ALL'
+  employmentCategory: 'ALL',
+  branchCategory: 'ALL',
+  nationality: 'ALL'
 };
 
 const TAB_CONFIGS: Record<string, { title: string; subtitle: string }> = {
@@ -49,7 +50,7 @@ const TAB_CONFIGS: Record<string, { title: string; subtitle: string }> = {
   },
   explorer: {
     title: 'Employee Directory',
-    subtitle: 'Searchable employee master roster with full 28-attribute profile dossiers.'
+    subtitle: 'Searchable employee master roster with full 29-attribute profile dossiers.'
   },
 };
 
@@ -143,6 +144,16 @@ export default function DashboardPage() {
 
       // Gender
       if (filters.gender !== 'ALL' && !(r.gender || '').toLowerCase().startsWith(filters.gender.toLowerCase().charAt(0))) {
+        return false;
+      }
+
+      // Employment Category
+      if (filters.employmentCategory !== 'ALL' && r.employmentCategory !== filters.employmentCategory) {
+        return false;
+      }
+
+      // Nationality
+      if (filters.nationality !== 'ALL' && r.nationality !== filters.nationality) {
         return false;
       }
 
@@ -291,7 +302,7 @@ export default function DashboardPage() {
         {/* Footer */}
         <footer className="border-t border-border py-3.5 px-4 sm:px-8 text-[11px] sm:text-xs text-muted-foreground flex flex-col sm:flex-row items-center justify-between gap-1.5 bg-sidebar mt-auto">
           <span>Apex HR Analytics • Enterprise Workforce Intelligence</span>
-          <span>SQLite Database: data/workforce.db</span>
+          <span>SQLite Database: data/workforce.db • 29 Schema Attributes</span>
         </footer>
       </div>
 

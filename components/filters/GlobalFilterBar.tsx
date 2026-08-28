@@ -83,6 +83,14 @@ export function GlobalFilterBar({
     return Array.from(set).sort();
   }, [allRecords]);
 
+  const uniqueCategories = React.useMemo(() => {
+    const set = new Set<string>();
+    allRecords.forEach((r) => {
+      if (r.employmentCategory) set.add(r.employmentCategory);
+    });
+    return Array.from(set).sort();
+  }, [allRecords]);
+
   // Active filter tags for quick dismissal
   const activeFilterTags = React.useMemo(() => {
     const tags: { key: keyof HRFilterState; label: string; value: string }[] = [];
@@ -93,6 +101,7 @@ export function GlobalFilterBar({
     if (filters.cadre !== 'ALL') tags.push({ key: 'cadre', label: 'Cadre', value: filters.cadre });
     if (filters.userStatus !== 'ALL') tags.push({ key: 'userStatus', label: 'Status', value: filters.userStatus });
     if (filters.gender !== 'ALL') tags.push({ key: 'gender', label: 'Gender', value: filters.gender });
+    if (filters.employmentCategory !== 'ALL') tags.push({ key: 'employmentCategory', label: 'Category', value: filters.employmentCategory });
     return tags;
   }, [filters]);
 
@@ -102,14 +111,14 @@ export function GlobalFilterBar({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
           <Filter className="h-3.5 w-3.5 text-primary" />
-          <span>Filter Parameters</span>
+          <span>Filter Workforce Parameters</span>
         </div>
         {activeFilterTags.length > 0 && (
           <Button
             variant="ghost"
             size="sm"
             onClick={onResetFilters}
-            className="h-7 text-xs px-2 text-muted-foreground hover:text-foreground gap-1.5"
+            className="h-7 text-xs px-2 text-muted-foreground hover:text-foreground gap-1.5 cursor-pointer"
           >
             <RotateCcw className="h-3 w-3" />
             <span>Reset all</span>
@@ -117,8 +126,8 @@ export function GlobalFilterBar({
         )}
       </div>
 
-      {/* Select Controls Grid (Responsive 1 -> 2 -> 4 -> 7 cols) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
+      {/* Select Controls Grid (Responsive 1 -> 2 -> 4 -> 8 cols) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2.5 sm:gap-3">
         {/* Region */}
         <div className="space-y-1">
           <label className="text-[11px] font-medium text-muted-foreground block">
@@ -138,8 +147,8 @@ export function GlobalFilterBar({
             </SelectTrigger>
             <SelectContent className="rounded-xl">
               <SelectItem value="ALL">All Regions</SelectItem>
-              {uniqueRegions.map((r) => (
-                <SelectItem key={r} value={r}>
+              {uniqueRegions.map((r, i) => (
+                <SelectItem key={`region-${r}-${i}`} value={r}>
                   {r}
                 </SelectItem>
               ))}
@@ -150,7 +159,7 @@ export function GlobalFilterBar({
         {/* Cluster */}
         <div className="space-y-1">
           <label className="text-[11px] font-medium text-muted-foreground block">
-            Cluster
+            Cluster (CLUS)
           </label>
           <Select
             value={filters.cluster}
@@ -164,8 +173,8 @@ export function GlobalFilterBar({
             </SelectTrigger>
             <SelectContent className="rounded-xl">
               <SelectItem value="ALL">All Clusters</SelectItem>
-              {uniqueClusters.map((c) => (
-                <SelectItem key={c} value={c}>
+              {uniqueClusters.map((c, i) => (
+                <SelectItem key={`clus-${c}-${i}`} value={c}>
                   {c}
                 </SelectItem>
               ))}
@@ -192,8 +201,8 @@ export function GlobalFilterBar({
             </SelectTrigger>
             <SelectContent className="rounded-xl">
               <SelectItem value="ALL">All Groups</SelectItem>
-              {uniqueGroups.map((g) => (
-                <SelectItem key={g} value={g}>
+              {uniqueGroups.map((g, i) => (
+                <SelectItem key={`group-${g}-${i}`} value={g}>
                   {g}
                 </SelectItem>
               ))}
@@ -204,7 +213,7 @@ export function GlobalFilterBar({
         {/* Sub-Group / Dept */}
         <div className="space-y-1">
           <label className="text-[11px] font-medium text-muted-foreground block">
-            Department
+            Department (Sub-Group)
           </label>
           <Select
             value={filters.subGroup}
@@ -218,8 +227,8 @@ export function GlobalFilterBar({
             </SelectTrigger>
             <SelectContent className="rounded-xl">
               <SelectItem value="ALL">All Sub-Groups</SelectItem>
-              {uniqueSubGroups.map((sg) => (
-                <SelectItem key={sg} value={sg}>
+              {uniqueSubGroups.map((sg, i) => (
+                <SelectItem key={`subgroup-${sg}-${i}`} value={sg}>
                   {sg}
                 </SelectItem>
               ))}
@@ -230,7 +239,7 @@ export function GlobalFilterBar({
         {/* Cadre */}
         <div className="space-y-1">
           <label className="text-[11px] font-medium text-muted-foreground block">
-            Cadre
+            Staff Cadre
           </label>
           <Select
             value={filters.cadre}
@@ -243,8 +252,8 @@ export function GlobalFilterBar({
             </SelectTrigger>
             <SelectContent className="rounded-xl">
               <SelectItem value="ALL">All Cadres</SelectItem>
-              {uniqueCadres.map((cadre) => (
-                <SelectItem key={cadre} value={cadre}>
+              {uniqueCadres.map((cadre, i) => (
+                <SelectItem key={`cadre-${cadre}-${i}`} value={cadre}>
                   {cadre}
                 </SelectItem>
               ))}
@@ -255,7 +264,7 @@ export function GlobalFilterBar({
         {/* User Status */}
         <div className="space-y-1">
           <label className="text-[11px] font-medium text-muted-foreground block">
-            Status
+            User Status
           </label>
           <Select
             value={filters.userStatus}
@@ -268,8 +277,8 @@ export function GlobalFilterBar({
             </SelectTrigger>
             <SelectContent className="rounded-xl">
               <SelectItem value="ALL">All Statuses</SelectItem>
-              {uniqueStatuses.map((st) => (
-                <SelectItem key={st} value={st}>
+              {uniqueStatuses.map((st, i) => (
+                <SelectItem key={`status-${st}-${i}`} value={st}>
                   {st}
                 </SelectItem>
               ))}
@@ -295,6 +304,31 @@ export function GlobalFilterBar({
               <SelectItem value="ALL">All Genders</SelectItem>
               <SelectItem value="Male">Male</SelectItem>
               <SelectItem value="Female">Female</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Employment Category */}
+        <div className="space-y-1">
+          <label className="text-[11px] font-medium text-muted-foreground block">
+            Category
+          </label>
+          <Select
+            value={filters.employmentCategory}
+            onValueChange={(val) => {
+              if (val) onFilterChange('employmentCategory', val);
+            }}
+          >
+            <SelectTrigger className="h-8.5 text-xs bg-background border-border rounded-lg w-full">
+              <SelectValue placeholder="All Categories" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              <SelectItem value="ALL">All Categories</SelectItem>
+              {uniqueCategories.map((cat, i) => (
+                <SelectItem key={`cat-${cat}-${i}`} value={cat}>
+                  {cat}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

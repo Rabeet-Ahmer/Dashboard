@@ -12,7 +12,24 @@ if (!fs.existsSync(DB_DIR)) {
 const DB_PATH = path.join(DB_DIR, 'workforce.db');
 const db = new DatabaseSync(DB_PATH);
 
-// Ensure tables exist
+// Auto-migrate schema if old columns exist
+try {
+  const tableCheck = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='employees'").all();
+  if (tableCheck.length > 0) {
+    const cols = db.prepare("PRAGMA table_info(employees)").all();
+    const colNames = new Set(cols.map(c => c.name));
+    const requiredCols = ['title', 'nationality', 'religion', 'national_id', 'employment_category'];
+    const isMissingColumns = requiredCols.some(c => !colNames.has(c));
+    if (isMissingColumns) {
+      db.exec('DROP TABLE IF EXISTS employees;');
+      db.exec('DELETE FROM workforce_metadata;');
+    }
+  }
+} catch (e) {
+  db.exec('DROP TABLE IF EXISTS employees;');
+}
+
+// Ensure tables exist matching 29-column schema
 db.exec(`
   CREATE TABLE IF NOT EXISTS workforce_metadata (
     key TEXT PRIMARY KEY,
@@ -23,6 +40,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS employees (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     employee_number TEXT NOT NULL,
+    title TEXT,
     full_name TEXT NOT NULL,
     user_status TEXT NOT NULL,
     group_name TEXT NOT NULL,
@@ -44,12 +62,12 @@ db.exec(`
     supervisor TEXT,
     father_name TEXT,
     gender TEXT NOT NULL,
-    national_identity TEXT,
-    employment_type TEXT NOT NULL,
+    employment_category TEXT NOT NULL,
     email_address TEXT,
-    contact_id TEXT,
     marital_status TEXT,
+    nationality TEXT,
     religion TEXT,
+    national_id TEXT,
     age INTEGER NOT NULL,
     tenure_years REAL NOT NULL,
     age_group TEXT NOT NULL,
@@ -60,11 +78,12 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_sheet_origin ON employees(sheet_origin);
   CREATE INDEX IF NOT EXISTS idx_employee_number ON employees(employee_number);
+  CREATE INDEX IF NOT EXISTS idx_region ON employees(region);
 `);
 
-// Date & Demographic helpers
+// Date & Demographic helpers - returns N/A for missing or invalid dates
 function parseExcelDate(val) {
-  if (!val) return { dateStr: 'N/A', year: 'N/A' };
+  if (val === null || val === undefined || val === '') return { dateStr: 'N/A', year: 'N/A' };
   if (val instanceof Date && !isNaN(val.getTime())) {
     const yyyy = val.getFullYear();
     const mm = String(val.getMonth() + 1).padStart(2, '0');
@@ -72,8 +91,9 @@ function parseExcelDate(val) {
     return { dateStr: `${yyyy}-${mm}-${dd}`, year: String(yyyy) };
   }
   if (typeof val === 'number') {
+    if (val < 1 || isNaN(val)) return { dateStr: 'N/A', year: 'N/A' };
     const date = new Date(Math.round((val - 25569) * 86400 * 1000));
-    if (!isNaN(date.getTime())) {
+    if (!isNaN(date.getTime()) && date.getFullYear() >= 1900 && date.getFullYear() <= 2100) {
       const yyyy = date.getFullYear();
       const mm = String(date.getMonth() + 1).padStart(2, '0');
       const dd = String(date.getDate()).padStart(2, '0');
@@ -82,39 +102,51 @@ function parseExcelDate(val) {
   }
   if (typeof val === 'string') {
     const trimmed = val.trim();
+    if (!trimmed || trimmed.toLowerCase() === 'n/a' || trimmed === '-' || trimmed.toLowerCase() === 'null' || trimmed.toLowerCase() === 'undefined') {
+      return { dateStr: 'N/A', year: 'N/A' };
+    }
     const parsed = new Date(trimmed);
-    if (!isNaN(parsed.getTime())) {
+    if (!isNaN(parsed.getTime()) && parsed.getFullYear() >= 1900 && parsed.getFullYear() <= 2100) {
       const yyyy = parsed.getFullYear();
       const mm = String(parsed.getMonth() + 1).padStart(2, '0');
       const dd = String(parsed.getDate()).padStart(2, '0');
       return { dateStr: `${yyyy}-${mm}-${dd}`, year: String(yyyy) };
     }
-    return { dateStr: trimmed, year: trimmed.substring(0, 4) || 'N/A' };
+    const yearMatch = trimmed.match(/\b(19\d{2}|20\d{2})\b/);
+    if (yearMatch) {
+      return { dateStr: trimmed, year: yearMatch[1] };
+    }
+    return { dateStr: trimmed, year: 'N/A' };
   }
-  return { dateStr: String(val), year: 'N/A' };
+  return { dateStr: String(val).trim() || 'N/A', year: 'N/A' };
 }
 
 function computeAge(dobStr) {
-  const now = new Date();
-  const yearMatch = dobStr.match(/\b(19\d{2}|20\d{2})\b/);
+  if (!dobStr || dobStr === 'N/A') return 0;
+  const currentYear = new Date().getFullYear();
+  const yearMatch = String(dobStr).match(/\b(19\d{2}|20\d{2})\b/);
   if (yearMatch) {
     const birthYear = parseInt(yearMatch[1], 10);
-    return Math.max(18, Math.min(80, now.getFullYear() - birthYear));
+    const age = currentYear - birthYear;
+    if (age >= 10 && age <= 120) return age;
   }
-  return 32;
+  return 0;
 }
 
 function computeTenure(hireStr) {
-  const now = new Date();
-  const yearMatch = hireStr.match(/\b(19\d{2}|20\d{2})\b/);
+  if (!hireStr || hireStr === 'N/A') return 0;
+  const currentYear = new Date().getFullYear();
+  const yearMatch = String(hireStr).match(/\b(19\d{2}|20\d{2})\b/);
   if (yearMatch) {
     const hireYear = parseInt(yearMatch[1], 10);
-    return Math.max(0, now.getFullYear() - hireYear);
+    const tenure = Math.max(0, currentYear - hireYear);
+    if (tenure <= 70) return parseFloat(tenure.toFixed(1));
   }
-  return 3.0;
+  return 0;
 }
 
 function getAgeGroup(age) {
+  if (!age || age <= 0) return 'N/A';
   if (age < 25) return '< 25 yrs';
   if (age <= 34) return '25 - 34 yrs';
   if (age <= 44) return '35 - 44 yrs';
@@ -123,6 +155,7 @@ function getAgeGroup(age) {
 }
 
 function getTenureGroup(tenureYears) {
+  if (!tenureYears || tenureYears <= 0) return 'N/A';
   if (tenureYears < 1) return '< 1 Year';
   if (tenureYears <= 3) return '1 - 3 Years';
   if (tenureYears <= 5) return '3 - 5 Years';
@@ -135,6 +168,7 @@ function normalizeKey(key) {
 }
 
 function extractFieldValue(row, possibleKeys) {
+  if (!row || typeof row !== 'object') return 'N/A';
   const rowKeys = Object.keys(row);
   const map = {};
   for (const k of rowKeys) {
@@ -144,13 +178,16 @@ function extractFieldValue(row, possibleKeys) {
     const normTarget = normalizeKey(targetKey);
     if (map[normTarget]) {
       const val = row[map[normTarget]];
-      return val !== undefined && val !== null ? String(val).trim() : '';
+      if (val !== undefined && val !== null) {
+        const str = String(val).trim();
+        if (str !== '' && str.toLowerCase() !== 'null' && str.toLowerCase() !== 'undefined') return str;
+      }
     }
   }
-  return '';
+  return 'N/A';
 }
 
-// Function to sync an Excel file into SQLite
+// Function to sync an Excel file into SQLite with zero fake data generation
 export function syncExcelToSQLite(filePath) {
   const resolvedPath = path.resolve(filePath);
   if (!fs.existsSync(resolvedPath)) {
@@ -176,14 +213,14 @@ export function syncExcelToSQLite(filePath) {
 
     const insertEmp = db.prepare(`
       INSERT INTO employees (
-        employee_number, full_name, user_status, group_name, sub_group,
+        employee_number, title, full_name, user_status, group_name, sub_group,
         date_of_birth, hire_date, branch_code, account_no, cadre, grade,
         location_code, flagship, branch_category, region, cluster, job,
-        position_name, org, supervisor, father_name, gender, national_identity,
-        employment_type, email_address, contact_id, marital_status, religion,
+        position_name, org, supervisor, father_name, gender, employment_category,
+        email_address, marital_status, nationality, religion, national_id,
         age, tenure_years, age_group, tenure_group, hire_year, sheet_origin
       ) VALUES (
-        ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?,
@@ -201,11 +238,14 @@ export function syncExcelToSQLite(filePath) {
 
       for (let i = 0; i < rawRows.length; i++) {
         const row = rawRows[i];
-        const empNo = extractFieldValue(row, ['EMPLOYEE_NUMBER', 'EMPLOYEE NUMBER', 'EMP NO', 'ID']) || `EMP-${totalCount + 1}`;
-        const fullName = extractFieldValue(row, ['FULL NAME', 'NAME', 'EMPLOYEE NAME']) || `Employee ${totalCount + 1}`;
-        const userStatus = extractFieldValue(row, ['USER STATUS', 'STATUS']) || 'Active';
-        const group = extractFieldValue(row, ['GROUP *', 'GROUP', 'DIVISION']) || 'General';
-        const subGroup = extractFieldValue(row, ['SUB GROUP *', 'SUB GROUP', 'DEPARTMENT']) || 'Operations';
+        const empNo = extractFieldValue(row, ['EMPLOYEE_NUMBER', 'EMPLOYEE NUMBER', 'EMP NO', 'ID']);
+        const rawTitle = extractFieldValue(row, ['TITLE', 'SALUTATION']);
+        const title = rawTitle !== 'N/A' ? rawTitle : '';
+        const fullName = extractFieldValue(row, ['FULL_NAME', 'FULL NAME', 'NAME', 'EMPLOYEE NAME']);
+        const rawStatus = extractFieldValue(row, ['USER_STATUS', 'USER STATUS', 'STATUS']);
+        const userStatus = rawStatus !== 'N/A' ? rawStatus.charAt(0).toUpperCase() + rawStatus.slice(1).toLowerCase() : 'N/A';
+        const group = extractFieldValue(row, ['GROUP', 'GROUP *', 'DIVISION']);
+        const subGroup = extractFieldValue(row, ['SUB_GROUP', 'SUB GROUP', 'DEPARTMENT']);
         
         const dobParsed = parseExcelDate(row[Object.keys(row).find(k => normalizeKey(k).includes('birth') || normalizeKey(k).includes('dob'))] || extractFieldValue(row, ['DATE_OF_BIRTH', 'DOB']));
         const hireParsed = parseExcelDate(row[Object.keys(row).find(k => normalizeKey(k).includes('hire') || normalizeKey(k).includes('join'))] || extractFieldValue(row, ['HIRE_DATE']));
@@ -213,38 +253,41 @@ export function syncExcelToSQLite(filePath) {
         const age = computeAge(dobParsed.dateStr);
         const tenureYears = computeTenure(hireParsed.dateStr);
 
-        const branchCode = extractFieldValue(row, ['BRANCH_CODE *', 'BRANCH CODE', 'BRANCH_CODE']) || 'BR-001';
+        const branchCode = extractFieldValue(row, ['BRANCH_CODE', 'BRANCH_CODE *', 'BRANCH CODE']);
         const accountNo = extractFieldValue(row, ['ACCOUNT_NO', 'ACCOUNT NO']);
-        const cadre = extractFieldValue(row, ['CADRE', 'CATEGORY']) || 'Officer';
-        const grade = extractFieldValue(row, ['GRADE', 'JOB GRADE']) || 'Officer Grade I';
-        const locationCode = extractFieldValue(row, ['LOCATION_CODE', 'LOCATION']) || 'LOC-01';
-        const flagship = extractFieldValue(row, ['FLAGSHIP']) || 'Standard';
-        const branchCategory = extractFieldValue(row, ['BRANCH_CATEGORY']) || 'Urban';
-        const region = extractFieldValue(row, ['REGION', 'ZONE']) || 'Central';
-        const cluster = extractFieldValue(row, ['CLUS', 'CLUSTER']) || 'Cluster 1';
-        const job = extractFieldValue(row, ['JOB', 'JOB ROLE']) || 'Banking Officer';
-        const positionName = extractFieldValue(row, ['Pos_name', 'POSITION NAME']) || job;
-        const org = extractFieldValue(row, ['ORG', 'COMPANY']) || 'Organization Ltd';
-        const supervisor = extractFieldValue(row, ['SUPERVISOR', 'MANAGER']) || '';
+        const cadre = extractFieldValue(row, ['CADRE', 'CATEGORY']);
+        const grade = extractFieldValue(row, ['Grade', 'GRADE', 'JOB GRADE']);
+        const locationCode = extractFieldValue(row, ['LOCATION_CODE', 'LOCATION']);
+        const flagship = extractFieldValue(row, ['FLAGSHIP']);
+        const branchCategory = extractFieldValue(row, ['BRANCH_CATEGORY']);
+        const region = extractFieldValue(row, ['Region', 'REGION', 'ZONE']);
+        const cluster = extractFieldValue(row, ['CLUS', 'CLUSTER']);
+        const job = extractFieldValue(row, ['JOB', 'JOB ROLE']);
+        const positionName = extractFieldValue(row, ['Pos_name', 'POS_NAME', 'POSITION NAME']);
+        const org = extractFieldValue(row, ['ORG', 'COMPANY']);
+        const supervisor = extractFieldValue(row, ['SUPERVISOR', 'MANAGER']);
         const fatherName = extractFieldValue(row, ['FATHER_NAME', 'FATHER NAME']);
 
-        let gender = extractFieldValue(row, ['GENDER', 'SEX']) || 'Male';
-        if (gender.toLowerCase().startsWith('m')) gender = 'Male';
-        else if (gender.toLowerCase().startsWith('f')) gender = 'Female';
+        const genderRaw = extractFieldValue(row, ['GENDER', 'SEX']);
+        let gender = genderRaw;
+        if (genderRaw !== 'N/A') {
+          if (genderRaw.toLowerCase().startsWith('f')) gender = 'Female';
+          else if (genderRaw.toLowerCase().startsWith('m')) gender = 'Male';
+        }
 
-        const nationalIdentity = extractFieldValue(row, ['NATIONAL_IDENTITY', 'CNIC']);
-        const employmentType = extractFieldValue(row, ['EMPL', 'EMPLOYMENT TYPE']) || 'Permanent';
-        const emailAddress = extractFieldValue(row, ['EMAIL_ADDRESS', 'EMAIL']) || `${empNo.toLowerCase()}@organization.com`;
-        const contactId = extractFieldValue(row, ['CONTACT_ID', 'PHONE']);
-        const maritalStatus = extractFieldValue(row, ['MARITAL_STATUS', 'MARITAL']) || 'Married';
-        const religion = extractFieldValue(row, ['RELIGION']) || 'Islam';
+        const employmentCategory = extractFieldValue(row, ['EMPLOYMENT_CATEGORY', 'EMPLOYMENT CATEGORY', 'EMPL', 'EMPLOYMENT TYPE']);
+        const emailAddress = extractFieldValue(row, ['EMAIL_ADDRESS', 'EMAIL']);
+        const maritalStatus = extractFieldValue(row, ['MARITAL_STATUS', 'MARITAL']);
+        const nationality = extractFieldValue(row, ['NATIONALITY', 'CITIZENSHIP']);
+        const religion = extractFieldValue(row, ['RELIGION']);
+        const nationalId = extractFieldValue(row, ['NATIONAL_ID', 'NATIONAL ID', 'NATIONAL_IDENTITY', 'CNIC']);
 
         insertEmp.run(
-          empNo, fullName, userStatus, group, subGroup,
+          empNo, title, fullName, userStatus, group, subGroup,
           dobParsed.dateStr, hireParsed.dateStr, branchCode, accountNo, cadre, grade,
           locationCode, flagship, branchCategory, region, cluster, job,
-          positionName, org, supervisor, fatherName, gender, nationalIdentity,
-          employmentType, emailAddress, contactId, maritalStatus, religion,
+          positionName, org, supervisor, fatherName, gender, employmentCategory,
+          emailAddress, maritalStatus, nationality, religion, nationalId,
           age, tenureYears, getAgeGroup(age), getTenureGroup(tenureYears), hireParsed.year,
           sheetName
         );

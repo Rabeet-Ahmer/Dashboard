@@ -1,49 +1,52 @@
+// Enterprise HR Record Type matching 29-column Excel Schema
 export interface EmployeeRecord {
-  // Raw 28 fields from HR Excel Schema
-  employeeNumber: string;
-  fullName: string;
-  userStatus: string;
-  group: string;
-  subGroup: string;
-  dateOfBirth: string;
-  hireDate: string;
-  branchCode: string;
-  accountNo: string;
-  cadre: string;
-  grade: string;
-  locationCode: string;
-  flagship: string;
-  branchCategory: string;
-  region: string;
-  cluster: string;
-  job: string;
-  positionName: string;
-  org: string;
-  supervisor: string;
-  fatherName: string;
-  gender: string;
-  nationalIdentity: string;
-  employmentType: string;
-  emailAddress: string;
-  contactId: string;
-  maritalStatus: string;
-  religion: string;
+  employeeNumber: string;         // EMPLOYEE_NUMBER
+  title: string;                  // TITLE (e.g. Mr., Ms., Dr.)
+  fullName: string;               // FULL_NAME
+  userStatus: string;             // USER_STATUS (Active, Resigned, On Leave, etc.)
+  group: string;                  // GROUP
+  subGroup: string;               // SUB_GROUP (Department / Division)
+  dateOfBirth: string;            // DATE_OF_BIRTH (YYYY-MM-DD)
+  hireDate: string;               // HIRE_DATE (YYYY-MM-DD)
+  branchCode: string;             // BRANCH_CODE
+  accountNo: string;              // ACCOUNT_NO
+  cadre: string;                  // CADRE (Executive, Management, Officer, Support)
+  grade: string;                  // Grade (e.g. VP, AVP, Manager, OG-I)
+  locationCode: string;           // LOCATION_CODE
+  flagship: string;               // FLAGSHIP (Yes/No/HQ)
+  branchCategory: string;         // BRANCH_CATEGORY (Urban, Commercial, Rural, Islamic)
+  region: string;                 // Region (North, Central, South, etc.)
+  cluster: string;                // CLUS (Cluster name)
+  job: string;                    // JOB (Job Title)
+  positionName: string;           // Pos_name (Position Designation)
+  org: string;                    // ORG (Organization / Company entity)
+  supervisor: string;             // SUPERVISOR (Reporting manager)
+  fatherName: string;             // FATHER_NAME
+  gender: string;                 // GENDER (Male, Female, Other)
+  employmentCategory: string;     // EMPLOYMENT_CATEGORY (Permanent, Contractual, Probationary, etc.)
+  emailAddress: string;           // EMAIL_ADDRESS
+  maritalStatus: string;          // MARITAL_STATUS (Single, Married, Divorced)
+  nationality: string;            // NATIONALITY (e.g. Pakistani, Expatriate)
+  religion: string;               // RELIGION (Islam, Christianity, Hinduism, etc.)
+  nationalId: string;             // NATIONAL_ID (CNIC, SSN, Passport)
 
-  // Computed & Derived properties
-  age: number;
-  tenureYears: number;
-  ageGroup: string;
-  tenureGroup: string;
-  hireYear: string;
-  sheetOrigin?: string;
+  // Derived analytical fields
+  age: number;                    // Calculated Age in years
+  tenureYears: number;            // Calculated Tenure in years
+  ageGroup: string;               // e.g. "< 25 yrs", "25 - 34 yrs", etc.
+  tenureGroup: string;            // e.g. "< 1 Year", "1 - 3 Years", etc.
+  hireYear: string;               // e.g. "2021"
+  sheetOrigin: string;            // Name of the sheet inside the multi-sheet workbook
 }
 
+// Multi-sheet workbook collection map (Sheet Name -> Records)
 export interface SheetCollection {
   [sheetName: string]: EmployeeRecord[];
 }
 
+// Global Filter State
 export interface HRFilterState {
-  sheet: string; // "ALL" or specific sheet name
+  sheet: string;
   search: string;
   region: string;
   cluster: string;
@@ -53,10 +56,12 @@ export interface HRFilterState {
   cadre: string;
   userStatus: string;
   gender: string;
-  employmentType: string;
+  employmentCategory: string;
   branchCategory: string;
+  nationality: string;
 }
 
+// Top KPI Metrics Summary
 export interface HRMetricsSummary {
   totalHeadcount: number;
   activeCount: number;
@@ -65,9 +70,8 @@ export interface HRMetricsSummary {
   avgTenureYears: number;
   avgAge: number;
   genderRatio: {
-    male: number;
-    female: number;
-    other: number;
+    maleCount: number;
+    femaleCount: number;
     malePercent: number;
     femalePercent: number;
   };

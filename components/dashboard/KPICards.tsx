@@ -77,10 +77,16 @@ export function KPICards({ metrics }: KPICardsProps) {
             <span className="text-[10px] text-muted-foreground font-mono shrink-0">Years</span>
           </div>
           <div className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-mono">
-            {metrics.avgTenureYears} <span className="text-xs sm:text-sm font-normal text-muted-foreground">yrs</span>
+            {metrics.avgTenureYears > 0 ? (
+              <>
+                {metrics.avgTenureYears} <span className="text-xs sm:text-sm font-normal text-muted-foreground">yrs</span>
+              </>
+            ) : (
+              'N/A'
+            )}
           </div>
           <p className="text-[11px] text-muted-foreground truncate">
-            {metrics.avgTenureYears >= 5 ? 'High stability' : 'Growing tenure'}
+            {metrics.avgTenureYears >= 5 ? 'High stability' : (metrics.avgTenureYears > 0 ? 'Growing tenure' : 'No tenure data')}
           </p>
         </CardContent>
       </Card>
@@ -103,10 +109,16 @@ export function KPICards({ metrics }: KPICardsProps) {
             <span className="text-[10px] text-muted-foreground font-mono shrink-0">Age</span>
           </div>
           <div className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-mono">
-            {metrics.avgAge} <span className="text-xs sm:text-sm font-normal text-muted-foreground">yrs</span>
+            {metrics.avgAge > 0 ? (
+              <>
+                {metrics.avgAge} <span className="text-xs sm:text-sm font-normal text-muted-foreground">yrs</span>
+              </>
+            ) : (
+              'N/A'
+            )}
           </div>
           <p className="text-[11px] text-muted-foreground truncate">
-            {metrics.avgAge < 35 ? 'Millennial/Gen-Z' : 'Experienced'}
+            {metrics.avgAge > 0 ? (metrics.avgAge < 35 ? 'Millennial/Gen-Z' : 'Experienced') : 'No DOB data'}
           </p>
         </CardContent>
       </Card>

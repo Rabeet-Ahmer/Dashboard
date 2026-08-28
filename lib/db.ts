@@ -1,6 +1,3 @@
-// `node:sqlite` is available at runtime in supported Node.js versions, but
-// older Node.js type definitions may not declare the built-in module yet.
-// @ts-expect-error -- supported runtime module missing from older type definitions
 import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -34,11 +31,30 @@ function initSchema(db: DatabaseSync) {
     );
   `);
 
-  // Employees table
+  // Check if existing employees table has old schema missing newly added columns
+  try {
+    const tableCheck = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='employees'").all();
+    if (tableCheck.length > 0) {
+      const cols = db.prepare("PRAGMA table_info(employees)").all() as { name: string }[];
+      const colNames = new Set(cols.map(c => c.name));
+      const requiredCols = ['title', 'nationality', 'religion', 'national_id', 'employment_category'];
+      const isMissingColumns = requiredCols.some(c => !colNames.has(c));
+      if (isMissingColumns) {
+        db.exec('DROP TABLE IF EXISTS employees;');
+        db.exec('DELETE FROM workforce_metadata;');
+      }
+    }
+  } catch (e) {
+    // If error inspecting schema, safely reset
+    db.exec('DROP TABLE IF EXISTS employees;');
+  }
+
+  // Create Employees table with full 29 schema fields
   db.exec(`
     CREATE TABLE IF NOT EXISTS employees (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       employee_number TEXT NOT NULL,
+      title TEXT,
       full_name TEXT NOT NULL,
       user_status TEXT NOT NULL,
       group_name TEXT NOT NULL,
@@ -60,12 +76,12 @@ function initSchema(db: DatabaseSync) {
       supervisor TEXT,
       father_name TEXT,
       gender TEXT NOT NULL,
-      national_identity TEXT,
-      employment_type TEXT NOT NULL,
+      employment_category TEXT NOT NULL,
       email_address TEXT,
-      contact_id TEXT,
       marital_status TEXT,
+      nationality TEXT,
       religion TEXT,
+      national_id TEXT,
       age INTEGER NOT NULL,
       tenure_years REAL NOT NULL,
       age_group TEXT NOT NULL,
@@ -106,6 +122,7 @@ export function getWorkforceData(): WorkforceDBResponse {
   const empStmt = db.prepare(`
     SELECT
       employee_number as employeeNumber,
+      title,
       full_name as fullName,
       user_status as userStatus,
       group_name as "group",
@@ -127,12 +144,12 @@ export function getWorkforceData(): WorkforceDBResponse {
       supervisor,
       father_name as fatherName,
       gender,
-      national_identity as nationalIdentity,
-      employment_type as employmentType,
+      employment_category as employmentCategory,
       email_address as emailAddress,
-      contact_id as contactId,
       marital_status as maritalStatus,
+      nationality,
       religion,
+      national_id as nationalId,
       age,
       tenure_years as tenureYears,
       age_group as ageGroup,
@@ -179,17 +196,17 @@ export function saveWorkforceData(sheets: SheetCollection, fileName: string): { 
     insertMeta.run('file_name', fileName, now);
     insertMeta.run('last_updated', now, now);
 
-    // 3. Insert employees
+    // 3. Insert employees with strict N/A for missing fields
     const insertEmp = db.prepare(`
       INSERT INTO employees (
-        employee_number, full_name, user_status, group_name, sub_group,
+        employee_number, title, full_name, user_status, group_name, sub_group,
         date_of_birth, hire_date, branch_code, account_no, cadre, grade,
         location_code, flagship, branch_category, region, cluster, job,
-        position_name, org, supervisor, father_name, gender, national_identity,
-        employment_type, email_address, contact_id, marital_status, religion,
+        position_name, org, supervisor, father_name, gender, employment_category,
+        email_address, marital_status, nationality, religion, national_id,
         age, tenure_years, age_group, tenure_group, hire_year, sheet_origin
       ) VALUES (
-        ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?,
@@ -202,40 +219,41 @@ export function saveWorkforceData(sheets: SheetCollection, fileName: string): { 
     for (const [sheetName, records] of Object.entries(sheets)) {
       for (const r of records) {
         insertEmp.run(
-          r.employeeNumber || `EMP-${count + 1}`,
-          r.fullName || '',
-          r.userStatus || 'Active',
-          r.group || '',
-          r.subGroup || '',
-          r.dateOfBirth || '',
-          r.hireDate || '',
-          r.branchCode || '',
-          r.accountNo || '',
-          r.cadre || '',
-          r.grade || '',
-          r.locationCode || '',
-          r.flagship || '',
-          r.branchCategory || '',
-          r.region || '',
-          r.cluster || '',
-          r.job || '',
-          r.positionName || '',
-          r.org || '',
-          r.supervisor || '',
-          r.fatherName || '',
-          r.gender || 'Male',
-          r.nationalIdentity || '',
-          r.employmentType || 'Permanent',
-          r.emailAddress || '',
-          r.contactId || '',
-          r.maritalStatus || '',
-          r.religion || '',
-          r.age || 30,
-          r.tenureYears || 1.0,
-          r.ageGroup || '',
-          r.tenureGroup || '',
-          r.hireYear || '',
-          sheetName
+          r.employeeNumber || 'N/A',
+          r.title || '',
+          r.fullName || 'N/A',
+          r.userStatus || 'N/A',
+          r.group || 'N/A',
+          r.subGroup || 'N/A',
+          r.dateOfBirth || 'N/A',
+          r.hireDate || 'N/A',
+          r.branchCode || 'N/A',
+          r.accountNo || 'N/A',
+          r.cadre || 'N/A',
+          r.grade || 'N/A',
+          r.locationCode || 'N/A',
+          r.flagship || 'N/A',
+          r.branchCategory || 'N/A',
+          r.region || 'N/A',
+          r.cluster || 'N/A',
+          r.job || 'N/A',
+          r.positionName || 'N/A',
+          r.org || 'N/A',
+          r.supervisor || 'N/A',
+          r.fatherName || 'N/A',
+          r.gender || 'N/A',
+          r.employmentCategory || 'N/A',
+          r.emailAddress || 'N/A',
+          r.maritalStatus || 'N/A',
+          r.nationality || 'N/A',
+          r.religion || 'N/A',
+          r.nationalId || 'N/A',
+          r.age || 0,
+          r.tenureYears || 0,
+          r.ageGroup || 'N/A',
+          r.tenureGroup || 'N/A',
+          r.hireYear || 'N/A',
+          sheetName || 'Default'
         );
         count++;
       }

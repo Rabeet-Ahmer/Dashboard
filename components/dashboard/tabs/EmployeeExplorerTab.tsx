@@ -42,7 +42,7 @@ interface EmployeeExplorerTabProps {
   activeSheetName: string;
 }
 
-type SortField = 'fullName' | 'employeeNumber' | 'userStatus' | 'group' | 'grade' | 'region' | 'branchCode' | 'tenureYears' | 'age';
+type SortField = 'fullName' | 'employeeNumber' | 'userStatus' | 'group' | 'grade' | 'region' | 'branchCode' | 'employmentCategory' | 'tenureYears' | 'age';
 type SortOrder = 'asc' | 'desc';
 
 export function EmployeeExplorerTab({ records, activeSheetName }: EmployeeExplorerTabProps) {
@@ -55,19 +55,44 @@ export function EmployeeExplorerTab({ records, activeSheetName }: EmployeeExplor
   const [modalOpen, setModalOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Filter by local search query
+  // Filter by local search query across all 29 fields
   const searchedRecords = useMemo(() => {
     if (!searchQuery.trim()) return records;
     const query = searchQuery.toLowerCase().trim();
     return records.filter((r) => {
       const matchesName = (r.fullName || '').toLowerCase().includes(query);
+      const matchesTitle = (r.title || '').toLowerCase().includes(query);
       const matchesId = (r.employeeNumber || '').toLowerCase().includes(query);
+      const matchesNationalId = (r.nationalId || '').toLowerCase().includes(query);
       const matchesPos = (r.positionName || '').toLowerCase().includes(query) || (r.job || '').toLowerCase().includes(query);
       const matchesBranch = (r.branchCode || '').toLowerCase().includes(query);
       const matchesEmail = (r.emailAddress || '').toLowerCase().includes(query);
       const matchesGroup = (r.group || '').toLowerCase().includes(query);
+      const matchesSubGroup = (r.subGroup || '').toLowerCase().includes(query);
       const matchesRegion = (r.region || '').toLowerCase().includes(query);
-      return matchesName || matchesId || matchesPos || matchesBranch || matchesEmail || matchesGroup || matchesRegion;
+      const matchesCluster = (r.cluster || '').toLowerCase().includes(query);
+      const matchesGrade = (r.grade || '').toLowerCase().includes(query);
+      const matchesCadre = (r.cadre || '').toLowerCase().includes(query);
+      const matchesEmpl = (r.employmentCategory || '').toLowerCase().includes(query);
+      const matchesNationality = (r.nationality || '').toLowerCase().includes(query);
+
+      return (
+        matchesName ||
+        matchesTitle ||
+        matchesId ||
+        matchesNationalId ||
+        matchesPos ||
+        matchesBranch ||
+        matchesEmail ||
+        matchesGroup ||
+        matchesSubGroup ||
+        matchesRegion ||
+        matchesCluster ||
+        matchesGrade ||
+        matchesCadre ||
+        matchesEmpl ||
+        matchesNationality
+      );
     });
   }, [records, searchQuery]);
 
@@ -78,7 +103,7 @@ export function EmployeeExplorerTab({ records, activeSheetName }: EmployeeExplor
       let valB: any = b[sortField];
 
       if (typeof valA === 'string') {
-        valA = valA.toLowerCase();
+        valA = (valA || '').toLowerCase();
         valB = (valB || '').toLowerCase();
         return sortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
       }
@@ -131,7 +156,7 @@ export function EmployeeExplorerTab({ records, activeSheetName }: EmployeeExplor
               </Badge>
             </CardTitle>
             <CardDescription className="text-[11px] sm:text-xs mt-0.5">
-              Click any row to open the complete 28-field profile dossier
+              Click any row to open the complete 29-attribute employee dossier
             </CardDescription>
           </div>
 
@@ -142,7 +167,7 @@ export function EmployeeExplorerTab({ records, activeSheetName }: EmployeeExplor
               <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Search name, ID, role, branch..."
+                placeholder="Search name, ID, role, branch, CNIC..."
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
@@ -153,7 +178,7 @@ export function EmployeeExplorerTab({ records, activeSheetName }: EmployeeExplor
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
+                  className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground cursor-pointer"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -165,7 +190,7 @@ export function EmployeeExplorerTab({ records, activeSheetName }: EmployeeExplor
                 variant="outline"
                 size="sm"
                 onClick={() => exportRecordsToExcel(searchedRecords, `HR_Explorer_${activeSheetName}.xlsx`)}
-                className="flex-1 sm:flex-initial h-8.5 text-xs gap-1.5 rounded-lg"
+                className="flex-1 sm:flex-initial h-8.5 text-xs gap-1.5 rounded-lg cursor-pointer"
               >
                 <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
                 <span>Excel</span>
@@ -174,7 +199,7 @@ export function EmployeeExplorerTab({ records, activeSheetName }: EmployeeExplor
                 variant="outline"
                 size="sm"
                 onClick={() => exportRecordsToCSV(searchedRecords, `HR_Explorer_${activeSheetName}.csv`)}
-                className="flex-1 sm:flex-initial h-8.5 text-xs gap-1.5 rounded-lg"
+                className="flex-1 sm:flex-initial h-8.5 text-xs gap-1.5 rounded-lg cursor-pointer"
               >
                 <Download className="h-3.5 w-3.5 text-blue-600" />
                 <span>CSV</span>
@@ -190,7 +215,7 @@ export function EmployeeExplorerTab({ records, activeSheetName }: EmployeeExplor
                 <TableRow className="text-xs hover:bg-transparent">
                   <TableHead className="w-[110px] sm:w-[120px] cursor-pointer font-semibold" onClick={() => handleSort('employeeNumber')}>
                     <div className="flex items-center gap-1">
-                      <span>EMP ID</span>
+                      <span>Employee ID</span>
                       <ArrowUpDown className="h-3 w-3 opacity-50" />
                     </div>
                   </TableHead>
@@ -224,6 +249,12 @@ export function EmployeeExplorerTab({ records, activeSheetName }: EmployeeExplor
                       <ArrowUpDown className="h-3 w-3 opacity-50" />
                     </div>
                   </TableHead>
+                  <TableHead className="min-w-[110px] cursor-pointer font-semibold" onClick={() => handleSort('employmentCategory')}>
+                    <div className="flex items-center gap-1">
+                      <span>Category</span>
+                      <ArrowUpDown className="h-3 w-3 opacity-50" />
+                    </div>
+                  </TableHead>
                   <TableHead className="cursor-pointer text-right font-semibold" onClick={() => handleSort('tenureYears')}>
                     <div className="flex items-center justify-end gap-1">
                       <span>Tenure</span>
@@ -242,17 +273,18 @@ export function EmployeeExplorerTab({ records, activeSheetName }: EmployeeExplor
               <TableBody>
                 {paginatedRecords.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="h-32 text-center text-xs text-muted-foreground">
+                    <TableCell colSpan={10} className="h-32 text-center text-xs text-muted-foreground">
                       No matching employee records found.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  paginatedRecords.map((emp) => {
+                  paginatedRecords.map((emp, index) => {
                     const isActive = (emp.userStatus || '').toLowerCase().includes('active');
+                    const displayName = emp.title ? `${emp.title} ${emp.fullName}` : emp.fullName;
 
                     return (
                       <TableRow
-                        key={emp.employeeNumber}
+                        key={`emp-${emp.employeeNumber}-${emp.sheetOrigin}-${index}`}
                         onClick={() => handleRowClick(emp)}
                         className="cursor-pointer hover:bg-muted/40 text-xs transition-colors group/row"
                       >
@@ -260,7 +292,7 @@ export function EmployeeExplorerTab({ records, activeSheetName }: EmployeeExplor
                           <button
                             onClick={(e) => handleCopyId(e, emp.employeeNumber)}
                             className="flex items-center gap-1 text-[11px] hover:underline cursor-pointer"
-                            title="Copy ID"
+                            title="Copy Employee ID"
                           >
                             <span>{emp.employeeNumber}</span>
                             {copiedId === emp.employeeNumber ? (
@@ -272,7 +304,7 @@ export function EmployeeExplorerTab({ records, activeSheetName }: EmployeeExplor
                         </TableCell>
                         <TableCell>
                           <div>
-                            <span className="font-semibold text-foreground block">{emp.fullName}</span>
+                            <span className="font-semibold text-foreground block">{displayName}</span>
                             <span className="text-[11px] text-muted-foreground truncate block max-w-[160px] sm:max-w-[180px]">
                               {emp.positionName || emp.job}
                             </span>
@@ -308,19 +340,24 @@ export function EmployeeExplorerTab({ records, activeSheetName }: EmployeeExplor
                             {emp.branchCode} ({emp.cluster})
                           </span>
                         </TableCell>
-                        <TableCell className="text-right font-mono font-medium text-foreground">
-                          {emp.tenureYears} yrs
+                        <TableCell>
+                          <Badge variant="secondary" className="text-[10px] font-normal font-sans">
+                            {emp.employmentCategory}
+                          </Badge>
                         </TableCell>
                         <TableCell className="text-right font-mono font-medium text-foreground">
-                          {emp.age} yrs
+                          {emp.tenureYears > 0 ? `${emp.tenureYears} yrs` : 'N/A'}
+                        </TableCell>
+                        <TableCell className="text-right font-mono font-medium text-foreground">
+                          {emp.age > 0 ? `${emp.age} yrs` : 'N/A'}
                         </TableCell>
                         <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                            className="h-7 w-7 text-muted-foreground hover:text-foreground cursor-pointer"
                             onClick={() => handleRowClick(emp)}
-                            title="View Full Profile"
+                            title="View Full 29-Field Dossier"
                           >
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
@@ -365,7 +402,7 @@ export function EmployeeExplorerTab({ records, activeSheetName }: EmployeeExplor
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 px-2.5 text-xs"
+                className="h-8 px-2.5 text-xs cursor-pointer"
                 disabled={currentPage <= 1}
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               >
@@ -375,7 +412,7 @@ export function EmployeeExplorerTab({ records, activeSheetName }: EmployeeExplor
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 px-2.5 text-xs"
+                className="h-8 px-2.5 text-xs cursor-pointer"
                 disabled={currentPage >= totalPages}
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               >
