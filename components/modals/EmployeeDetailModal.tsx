@@ -272,6 +272,23 @@ export function EmployeeDetailModal({
                     )}
                   </div>
                 </div>
+                <div className="col-span-2">
+                  <span className="text-[10px] uppercase text-muted-foreground/70 block">Contact / Phone Number</span>
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="font-mono font-medium text-foreground truncate block">
+                      {employee.contact || 'N/A'}
+                    </span>
+                    {employee.contact && employee.contact !== 'N/A' && (
+                      <button
+                        onClick={() => handleCopy('contact', employee.contact)}
+                        className="text-muted-foreground hover:text-foreground p-1 shrink-0 cursor-pointer"
+                        title="Copy Contact Number"
+                      >
+                        {copiedField === 'contact' ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

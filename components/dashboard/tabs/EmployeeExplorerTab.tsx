@@ -75,12 +75,14 @@ export function EmployeeExplorerTab({ records, activeSheetName }: EmployeeExplor
       const matchesCadre = (r.cadre || '').toLowerCase().includes(query);
       const matchesEmpl = (r.employmentCategory || '').toLowerCase().includes(query);
       const matchesNationality = (r.nationality || '').toLowerCase().includes(query);
+      const matchesContact = (r.contact || '').toLowerCase().includes(query);
 
       return (
         matchesName ||
         matchesTitle ||
         matchesId ||
         matchesNationalId ||
+        matchesContact ||
         matchesPos ||
         matchesBranch ||
         matchesEmail ||

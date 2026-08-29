@@ -29,6 +29,7 @@ export interface EmployeeRecord {
   nationality: string;            // NATIONALITY (e.g. Pakistani, Expatriate)
   religion: string;               // RELIGION (Islam, Christianity, Hinduism, etc.)
   nationalId: string;             // NATIONAL_ID (CNIC, SSN, Passport)
+  contact: string;                // CONTACT (Phone / Mobile Number)
 
   // Derived analytical fields
   age: number;                    // Calculated Age in years

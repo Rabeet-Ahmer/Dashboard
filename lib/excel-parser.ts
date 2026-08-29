@@ -289,6 +289,9 @@ export function mapRowToEmployeeRecord(row: Record<string, any>, index: number, 
   // 29. NATIONAL_ID
   const nationalId = extractFieldValue(row, ['NATIONAL_ID', 'NATIONAL ID', 'NATIONAL_IDENTITY', 'CNIC', 'SSN', 'PASSPORT_NO', 'IDENTITY_NO']);
 
+  // 30. CONTACT (Phone / Mobile Number)
+  const contact = extractFieldValue(row, ['CONTACT', 'CONTACT_NO', 'CONTACT_NUMBER', 'PHONE', 'PHONE_NUMBER', 'MOBILE', 'CELL_NO', 'MOBILE_NO', 'CONTACT NO', 'PHONE NO', 'TEL', 'TELEPHONE']);
+
   return {
     employeeNumber: empNo,
     title,
@@ -319,6 +322,7 @@ export function mapRowToEmployeeRecord(row: Record<string, any>, index: number, 
     nationality,
     religion,
     nationalId,
+    contact,
 
     // Derived fields
     age,
@@ -349,7 +353,7 @@ export function parseExcelWorkbook(buffer: ArrayBuffer): SheetCollection {
   return sheetsData;
 }
 
-// Export records to Excel file matching the exact 29-column schema
+// Export records to Excel file matching the schema
 export function exportRecordsToExcel(records: EmployeeRecord[], filename: string = 'HR_Workforce_Export.xlsx') {
   const exportData = records.map(r => ({
     'EMPLOYEE_NUMBER': r.employeeNumber,
@@ -377,6 +381,7 @@ export function exportRecordsToExcel(records: EmployeeRecord[], filename: string
     'GENDER': r.gender,
     'EMPLOYMENT_CATEGORY': r.employmentCategory,
     'EMAIL_ADDRESS': r.emailAddress,
+    'CONTACT': r.contact,
     'MARITAL_STATUS': r.maritalStatus,
     'NATIONALITY': r.nationality,
     'RELIGION': r.religion,
@@ -389,7 +394,7 @@ export function exportRecordsToExcel(records: EmployeeRecord[], filename: string
   XLSX.writeFile(workbook, filename);
 }
 
-// Export records to CSV file matching the exact 29-column schema
+// Export records to CSV file matching the schema
 export function exportRecordsToCSV(records: EmployeeRecord[], filename: string = 'HR_Workforce_Export.csv') {
   const exportData = records.map(r => ({
     'EMPLOYEE_NUMBER': r.employeeNumber,
@@ -417,6 +422,7 @@ export function exportRecordsToCSV(records: EmployeeRecord[], filename: string =
     'GENDER': r.gender,
     'EMPLOYMENT_CATEGORY': r.employmentCategory,
     'EMAIL_ADDRESS': r.emailAddress,
+    'CONTACT': r.contact,
     'MARITAL_STATUS': r.maritalStatus,
     'NATIONALITY': r.nationality,
     'RELIGION': r.religion,

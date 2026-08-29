@@ -49,7 +49,7 @@ function initSchema(db: DatabaseSync) {
     if (tableCheck.length > 0) {
       const cols = db.prepare("PRAGMA table_info(employees)").all() as { name: string }[];
       const colNames = new Set(cols.map(c => c.name));
-      const requiredCols = ['title', 'nationality', 'religion', 'national_id', 'employment_category'];
+      const requiredCols = ['title', 'nationality', 'religion', 'national_id', 'employment_category', 'contact'];
       const isMissingColumns = requiredCols.some(c => !colNames.has(c));
       if (isMissingColumns) {
         db.exec('DROP TABLE IF EXISTS employees;');
@@ -63,7 +63,7 @@ function initSchema(db: DatabaseSync) {
     } catch (_) {}
   }
 
-  // Create Employees table with full 29 schema fields
+  // Create Employees table with full schema fields (including contact)
   db.exec(`
     CREATE TABLE IF NOT EXISTS employees (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -92,6 +92,7 @@ function initSchema(db: DatabaseSync) {
       gender TEXT NOT NULL,
       employment_category TEXT NOT NULL,
       email_address TEXT,
+      contact TEXT,
       marital_status TEXT,
       nationality TEXT,
       religion TEXT,
@@ -161,6 +162,7 @@ export function getWorkforceData(): WorkforceDBResponse {
         gender,
         employment_category as employmentCategory,
         email_address as emailAddress,
+        contact,
         marital_status as maritalStatus,
         nationality,
         religion,
@@ -227,14 +229,14 @@ export function saveWorkforceData(sheets: SheetCollection, fileName: string): { 
         date_of_birth, hire_date, branch_code, account_no, cadre, grade,
         location_code, flagship, branch_category, region, cluster, job,
         position_name, org, supervisor, father_name, gender, employment_category,
-        email_address, marital_status, nationality, religion, national_id,
+        email_address, contact, marital_status, nationality, religion, national_id,
         age, tenure_years, age_group, tenure_group, hire_year, sheet_origin
       ) VALUES (
         ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?,
-        ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?
       )
     `);
@@ -268,6 +270,7 @@ export function saveWorkforceData(sheets: SheetCollection, fileName: string): { 
           r.gender || 'N/A',
           r.employmentCategory || 'N/A',
           r.emailAddress || 'N/A',
+          r.contact || 'N/A',
           r.maritalStatus || 'N/A',
           r.nationality || 'N/A',
           r.religion || 'N/A',
