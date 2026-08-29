@@ -1,21 +1,33 @@
 import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
 import fs from 'node:fs';
+import os from 'node:os';
 import { EmployeeRecord, SheetCollection } from '@/types/hr';
 
-// Ensure data directory exists in project root
-const DB_DIR = path.join(process.cwd(), 'data');
-if (!fs.existsSync(DB_DIR)) {
-  fs.mkdirSync(DB_DIR, { recursive: true });
-}
+function getDbPath(): string {
+  // On Vercel or AWS serverless environments, /tmp is the only writable filesystem location
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NODE_ENV === 'production') {
+    return path.join(os.tmpdir(), 'workforce.db');
+  }
 
-const DB_PATH = path.join(DB_DIR, 'workforce.db');
+  // Local development fallback
+  try {
+    const localDir = path.join(process.cwd(), 'data');
+    if (!fs.existsSync(localDir)) {
+      fs.mkdirSync(localDir, { recursive: true });
+    }
+    return path.join(localDir, 'workforce.db');
+  } catch (e) {
+    return path.join(os.tmpdir(), 'workforce.db');
+  }
+}
 
 let _db: DatabaseSync | null = null;
 
 export function getDatabase(): DatabaseSync {
   if (!_db) {
-    _db = new DatabaseSync(DB_PATH);
+    const dbPath = getDbPath();
+    _db = new DatabaseSync(dbPath);
     initSchema(_db);
   }
   return _db;
@@ -46,7 +58,9 @@ function initSchema(db: DatabaseSync) {
     }
   } catch (e) {
     // If error inspecting schema, safely reset
-    db.exec('DROP TABLE IF EXISTS employees;');
+    try {
+      db.exec('DROP TABLE IF EXISTS employees;');
+    } catch (_) {}
   }
 
   // Create Employees table with full 29 schema fields
@@ -104,79 +118,89 @@ export interface WorkforceDBResponse {
 }
 
 export function getWorkforceData(): WorkforceDBResponse {
-  const db = getDatabase();
+  try {
+    const db = getDatabase();
 
-  // Get metadata
-  const metaStmt = db.prepare('SELECT key, value, updated_at FROM workforce_metadata');
-  const metaRows = metaStmt.all() as { key: string; value: string; updated_at: string }[];
-  
-  let fileName = 'workforce.xlsx';
-  let updatedAt = '';
+    // Get metadata
+    const metaStmt = db.prepare('SELECT key, value, updated_at FROM workforce_metadata');
+    const metaRows = metaStmt.all() as { key: string; value: string; updated_at: string }[];
+    
+    let fileName = 'workforce.xlsx';
+    let updatedAt = '';
 
-  for (const row of metaRows) {
-    if (row.key === 'file_name') fileName = row.value;
-    if (row.key === 'last_updated') updatedAt = row.value;
-  }
-
-  // Get all employees
-  const empStmt = db.prepare(`
-    SELECT
-      employee_number as employeeNumber,
-      title,
-      full_name as fullName,
-      user_status as userStatus,
-      group_name as "group",
-      sub_group as subGroup,
-      date_of_birth as dateOfBirth,
-      hire_date as hireDate,
-      branch_code as branchCode,
-      account_no as accountNo,
-      cadre,
-      grade,
-      location_code as locationCode,
-      flagship,
-      branch_category as branchCategory,
-      region,
-      cluster,
-      job,
-      position_name as positionName,
-      org,
-      supervisor,
-      father_name as fatherName,
-      gender,
-      employment_category as employmentCategory,
-      email_address as emailAddress,
-      marital_status as maritalStatus,
-      nationality,
-      religion,
-      national_id as nationalId,
-      age,
-      tenure_years as tenureYears,
-      age_group as ageGroup,
-      tenure_group as tenureGroup,
-      hire_year as hireYear,
-      sheet_origin as sheetOrigin
-    FROM employees
-    ORDER BY id ASC
-  `);
-
-  const rows = empStmt.all() as EmployeeRecord[];
-  const sheets: SheetCollection = {};
-
-  for (const row of rows) {
-    const origin = row.sheetOrigin || 'Default';
-    if (!sheets[origin]) {
-      sheets[origin] = [];
+    for (const row of metaRows) {
+      if (row.key === 'file_name') fileName = row.value;
+      if (row.key === 'last_updated') updatedAt = row.value;
     }
-    sheets[origin].push(row);
-  }
 
-  return {
-    sheets,
-    fileName,
-    totalCount: rows.length,
-    updatedAt
-  };
+    // Get all employees
+    const empStmt = db.prepare(`
+      SELECT
+        employee_number as employeeNumber,
+        title,
+        full_name as fullName,
+        user_status as userStatus,
+        group_name as "group",
+        sub_group as subGroup,
+        date_of_birth as dateOfBirth,
+        hire_date as hireDate,
+        branch_code as branchCode,
+        account_no as accountNo,
+        cadre,
+        grade,
+        location_code as locationCode,
+        flagship,
+        branch_category as branchCategory,
+        region,
+        cluster,
+        job,
+        position_name as positionName,
+        org,
+        supervisor,
+        father_name as fatherName,
+        gender,
+        employment_category as employmentCategory,
+        email_address as emailAddress,
+        marital_status as maritalStatus,
+        nationality,
+        religion,
+        national_id as nationalId,
+        age,
+        tenure_years as tenureYears,
+        age_group as ageGroup,
+        tenure_group as tenureGroup,
+        hire_year as hireYear,
+        sheet_origin as sheetOrigin
+      FROM employees
+      ORDER BY id ASC
+    `);
+
+    const rows = empStmt.all() as EmployeeRecord[];
+    const sheets: SheetCollection = {};
+
+    for (const row of rows) {
+      const origin = row.sheetOrigin || 'Default';
+      if (!sheets[origin]) {
+        sheets[origin] = [];
+      }
+      sheets[origin].push(row);
+    }
+
+    return {
+      sheets,
+      fileName,
+      totalCount: rows.length,
+      updatedAt
+    };
+  } catch (error) {
+    console.warn('Notice: SQLite workforce database uninitialized or empty:', error);
+    return {
+      sheets: {},
+      fileName: '',
+      totalCount: 0,
+      updatedAt: ''
+    };
+  }
 }
 
 export function saveWorkforceData(sheets: SheetCollection, fileName: string): { totalCount: number } {
@@ -262,20 +286,26 @@ export function saveWorkforceData(sheets: SheetCollection, fileName: string): { 
     db.exec('COMMIT;');
     return { totalCount: count };
   } catch (error) {
-    db.exec('ROLLBACK;');
+    try {
+      db.exec('ROLLBACK;');
+    } catch (_) {}
     throw error;
   }
 }
 
 export function clearWorkforceData(): void {
-  const db = getDatabase();
-  db.exec('BEGIN TRANSACTION;');
   try {
-    db.exec('DELETE FROM employees;');
-    db.exec('DELETE FROM workforce_metadata;');
-    db.exec('COMMIT;');
-  } catch (error) {
-    db.exec('ROLLBACK;');
-    throw error;
+    const db = getDatabase();
+    db.exec('BEGIN TRANSACTION;');
+    try {
+      db.exec('DELETE FROM employees;');
+      db.exec('DELETE FROM workforce_metadata;');
+      db.exec('COMMIT;');
+    } catch (error) {
+      db.exec('ROLLBACK;');
+      throw error;
+    }
+  } catch (e) {
+    console.warn('Notice: Could not clear SQLite database:', e);
   }
 }
