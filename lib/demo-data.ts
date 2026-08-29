@@ -1,87 +1,81 @@
-import { EmployeeRecord, SheetCollection } from '@/types/hr';
-import { getAgeGroup, getTenureGroup } from './excel-parser';
+import { SheetCollection } from '@/types/hr';
 
-const FIRST_NAMES_MALE = [
-  'Muhammad', 'Ali', 'Ahmed', 'Usman', 'Hamza', 'Bilal', 'Omar', 'Hassan', 'Zaid', 'Tariq',
-  'Kamran', 'Faisal', 'Imran', 'Saad', 'Danish', 'Farhan', 'Kashif', 'Waqas', 'Asad', 'Babar'
+const REGIONS = [
+  'Federal Capital',
+  'South Region',
+  'Central Region',
+  'North Region',
+  'Special Economic Zone'
 ];
 
-const FIRST_NAMES_FEMALE = [
-  'Fatima', 'Ayesha', 'Zainab', 'Maryam', 'Sana', 'Hira', 'Amna', 'Noor', 'Sara', 'Sadia',
-  'Anum', 'Rabia', 'Mahnoor', 'Iqra', 'Nimra', 'Mehwish', 'Samina', 'Nida', 'Kiran', 'Bushra'
-];
-
-const LAST_NAMES = [
-  'Khan', 'Ahmed', 'Malik', 'Sheikh', 'Chaudhry', 'Siddiqui', 'Qureshi', 'Raza', 'Shah', 'Farooqi',
-  'Mirza', 'Abbasi', 'Butt', 'Dar', 'Ansari', 'Ghafoor', 'Iqbal', 'Hussain', 'Zubair', 'Mahmood'
-];
-
-const REGIONS = ['North Region', 'Central Region', 'South Region', 'Federal Capital', 'West Region'];
 const CLUSTERS: Record<string, string[]> = {
-  'North Region': ['Peshawar Cluster', 'Rawalpindi Cluster', 'Abbottabad Cluster', 'Mardan Cluster'],
-  'Central Region': ['Lahore City Cluster', 'Faisalabad Cluster', 'Multan Cluster', 'Gujranwala Cluster', 'Sialkot Cluster'],
-  'South Region': ['Karachi South Cluster', 'Karachi Central Cluster', 'Hyderabad Cluster', 'Sukkur Cluster', 'Quetta Cluster'],
-  'Federal Capital': ['Islamabad Blue Area Cluster', 'Islamabad F-Sector Cluster'],
-  'West Region': ['Gwadar Cluster', 'Hub Industrial Cluster']
+  'Federal Capital': ['Islamabad Urban', 'Rawalpindi Metro', 'Diplomatic Enclave'],
+  'South Region': ['Karachi South & Port', 'Karachi Central', 'Hyderabad & Interior'],
+  'Central Region': ['Lahore CBD', 'Faisalabad Industrial', 'Multan Hub'],
+  'North Region': ['Peshawar City', 'Abbottabad Valley', 'Mardan Division'],
+  'Special Economic Zone': ['Gwadar Port Zone', 'Rashakai Hub', 'Dhabeji SEZ']
 };
 
+const BRANCH_CATEGORIES = ['Corporate Head Office', 'Urban Commercial', 'Retail Branch', 'Islamic Banking Hub', 'Rural Agribusiness'];
+
 const GROUPS_SUBGROUPS: Record<string, { subGroups: string[]; jobs: { job: string; pos: string; cadre: string; grade: string }[] }> = {
-  'Retail Banking Group': {
-    subGroups: ['Branch Operations', 'Consumer Finance', 'Customer Experience', 'Bancassurance', 'Direct Sales'],
+  'Branch Banking Group': {
+    subGroups: ['Retail Operations', 'Customer Experience', 'Islamic Window', 'Branch Audit & Controls'],
     jobs: [
-      { job: 'Branch Management', pos: 'Branch Manager', cadre: 'Management', grade: 'Vice President' },
-      { job: 'Branch Operations', pos: 'Branch Operations Manager', cadre: 'Management', grade: 'Assistant Vice President' },
-      { job: 'Customer Service', pos: 'Senior Customer Relationship Officer', cadre: 'Officer', grade: 'Officer Grade I' },
-      { job: 'Teller Services', pos: 'Universal Teller & Cash Officer', cadre: 'Officer', grade: 'Officer Grade II' },
-      { job: 'Consumer Lending', pos: 'Auto & Home Finance Specialist', cadre: 'Officer', grade: 'Officer Grade II' },
-      { job: 'Branch Support', pos: 'Office Assistant', cadre: 'Support Staff', grade: 'Non-Management' }
+      { job: 'Branch Manager', pos: 'Senior Branch Manager (AVP)', cadre: 'Management', grade: 'AVP' },
+      { job: 'Operations Manager', pos: 'Branch Operations Officer', cadre: 'Officer', grade: 'OG-I' },
+      { job: 'Relationship Manager', pos: 'Senior RM - Commercial', cadre: 'Officer', grade: 'OG-II' },
+      { job: 'Universal Teller', pos: 'Senior Teller & Cash Custodian', cadre: 'Support', grade: 'OG-III' },
+      { job: 'Customer Service Officer', pos: 'CS Desk Specialist', cadre: 'Support', grade: 'Associate' }
     ]
   },
   'Information Technology Group': {
-    subGroups: ['Core Banking Solutions', 'Cyber Security', 'Infrastructure & Cloud', 'Digital Channels & Mobile', 'Data & Analytics'],
+    subGroups: ['Core Banking Engineering', 'Cloud Infrastructure & DevOps', 'Cybersecurity & SOC', 'Data & AI Platform'],
     jobs: [
-      { job: 'IT Leadership', pos: 'Head of Enterprise Architecture', cadre: 'Executive', grade: 'Senior Vice President' },
-      { job: 'Software Engineering', pos: 'Senior Full Stack Engineer', cadre: 'Management', grade: 'Manager' },
-      { job: 'Cyber Security', pos: 'SOC Analyst & SecOps Lead', cadre: 'Officer', grade: 'Officer Grade I' },
-      { job: 'Data Analytics', pos: 'Senior Business Intelligence Analyst', cadre: 'Officer', grade: 'Officer Grade I' },
-      { job: 'System Administration', pos: 'DevOps & Cloud Engineer', cadre: 'Officer', grade: 'Officer Grade II' },
-      { job: 'IT Helpdesk', pos: 'IT Support Engineer', cadre: 'Support Staff', grade: 'Officer Grade III' }
-    ]
-  },
-  'Corporate & Commercial Group': {
-    subGroups: ['Large Corporate Lending', 'SME Banking', 'Trade Finance & FX', 'Structured Finance', 'Syndications'],
-    jobs: [
-      { job: 'Relationship Management', pos: 'Senior Relationship Manager - Corporate', cadre: 'Management', grade: 'Vice President' },
-      { job: 'Credit Analysis', pos: 'Senior Credit Risk Analyst', cadre: 'Management', grade: 'Assistant Vice President' },
-      { job: 'Trade Services', pos: 'Trade Finance Officer', cadre: 'Officer', grade: 'Officer Grade I' },
-      { job: 'SME Portfolio', pos: 'SME Relationship Officer', cadre: 'Officer', grade: 'Officer Grade II' },
-      { job: 'Treasury Operations', pos: 'Treasury Settlement Associate', cadre: 'Officer', grade: 'Officer Grade II' }
+      { job: 'Lead Cloud Architect', pos: 'Principal Cloud Platform Engineer', cadre: 'Executive', grade: 'VP' },
+      { job: 'Senior Full Stack Engineer', pos: 'Staff Software Engineer - FinTech', cadre: 'Management', grade: 'AVP' },
+      { job: 'Database Administrator', pos: 'High-Availability DBA Specialist', cadre: 'Officer', grade: 'OG-I' },
+      { job: 'Cyber Threat Analyst', pos: 'SOC Lead Security Analyst', cadre: 'Officer', grade: 'OG-II' },
+      { job: 'Data Engineer', pos: 'Analytics Pipeline Engineer', cadre: 'Officer', grade: 'OG-II' }
     ]
   },
   'Operations & Support Group': {
-    subGroups: ['Centralized Clearing (NIFT)', 'HR Shared Services', 'Compliance & AML', 'Internal Audit', 'Legal & Governance'],
+    subGroups: ['Central Clearing & Settlements', 'Trade Finance Services', 'Corporate Cash Management', 'Facilities & Real Estate'],
     jobs: [
-      { job: 'Audit & Inspection', pos: 'Senior Internal Auditor', cadre: 'Management', grade: 'Assistant Vice President' },
-      { job: 'Compliance', pos: 'AML & Sanctions Compliance Officer', cadre: 'Officer', grade: 'Officer Grade I' },
-      { job: 'HR Operations', pos: 'Talent Acquisition & HRBP', cadre: 'Officer', grade: 'Officer Grade I' },
-      { job: 'Clearing Operations', pos: 'Clearing & Remittance Associate', cadre: 'Officer', grade: 'Officer Grade II' },
-      { job: 'Logistics', pos: 'Facilities & Security Officer', cadre: 'Support Staff', grade: 'Officer Grade III' }
+      { job: 'Settlements Head', pos: 'Head of Swift & Central Clearing', cadre: 'Executive', grade: 'SVP' },
+      { job: 'Trade Finance Specialist', pos: 'LC & Guarantees Operations Officer', cadre: 'Management', grade: 'AVP' },
+      { job: 'Reconciliation Officer', pos: 'Daily Nostro & GL Reconciler', cadre: 'Officer', grade: 'OG-I' },
+      { job: 'Cash Vault Officer', pos: 'Central Vault Custodian', cadre: 'Support', grade: 'OG-III' }
+    ]
+  },
+  'Corporate & Commercial Group': {
+    subGroups: ['Syndicated Lending & Project Finance', 'Multinational Corporate Desk', 'SME Business Banking'],
+    jobs: [
+      { job: 'Senior Credit Underwriter', pos: 'VP - Large Corporate Credit', cadre: 'Executive', grade: 'VP' },
+      { job: 'Portfolio Manager', pos: 'SME Commercial Portfolio Head', cadre: 'Management', grade: 'AVP' },
+      { job: 'Credit Analyst', pos: 'Financial Modelling & Risk Analyst', cadre: 'Officer', grade: 'OG-I' }
     ]
   }
 };
 
-const BRANCH_CATEGORIES = ['Urban High Volume', 'Commercial Hub', 'Semi-Urban', 'Rural Outreach', 'Islamic Banking Branch'];
-const EMPLOYMENT_TYPES = ['Permanent', 'Permanent', 'Permanent', 'Contractual', 'Probationary'];
-const MARITAL_STATUSES = ['Married', 'Married', 'Single', 'Married', 'Single'];
-const RELIGIONS = ['Islam', 'Islam', 'Islam', 'Christianity', 'Islam', 'Hinduism'];
 const SUPERVISORS = [
-  'Kamran Farooqi (EVP - Group Head)',
-  'Ayesha Tariq (SVP - Regional Head)',
-  'Babar Raza (VP - Division Lead)',
-  'Fatima Sheikh (AVP - Team Manager)',
-  'Zaid Chaudhry (AVP - Operations Lead)',
-  'Sana Siddiqui (Manager - Dept Lead)'
+  'Tariq Mansoor (EVP)',
+  'Dr. Ayesha Siddiqui (SVP)',
+  'Khurram Jahangir (VP)',
+  'Zainab Al-Husseini (VP)',
+  'Bilal Ahmed Qureshi (AVP)',
+  'Farhana Batool (AVP)',
+  'Naveed Akhtar (AVP)',
+  'Shehryar Khan (VP)'
 ];
+
+const FIRST_NAMES_MALE = ['Muhammad', 'Ahmed', 'Ali', 'Usman', 'Hamza', 'Bilal', 'Zayd', 'Mustafa', 'Hassan', 'Farooq', 'Imran', 'Kamran', 'Omar', 'Saad'];
+const FIRST_NAMES_FEMALE = ['Fatima', 'Ayesha', 'Zainab', 'Maryam', 'Sara', 'Hira', 'Sana', 'Khadija', 'Noor', 'Mahnoor', 'Anam', 'Rabia', 'Sadia'];
+const LAST_NAMES = ['Khan', 'Ahmed', 'Malik', 'Qureshi', 'Siddiqui', 'Shah', 'Chaudhry', 'Bhatti', 'Ansari', 'Raza', 'Farooqi', 'Hashmi', 'Mirza'];
+
+const MARITAL_STATUSES = ['Married', 'Single', 'Married', 'Married', 'Single'];
+const RELIGIONS = ['Islam', 'Christianity', 'Islam', 'Islam', 'Hinduism', 'Islam'];
+const EMPLOYMENT_CATEGORIES = ['Permanent', 'Permanent', 'Permanent', 'Contractual', 'Probationary'];
 
 function randomChoice<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -91,7 +85,23 @@ function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-export function generateDemoHRDataset(): SheetCollection {
+function getAgeGroup(age: number): string {
+  if (age < 25) return '< 25 yrs';
+  if (age <= 34) return '25 - 34 yrs';
+  if (age <= 44) return '35 - 44 yrs';
+  if (age <= 54) return '45 - 54 yrs';
+  return '55+ yrs';
+}
+
+function getTenureGroup(tenureYears: number): string {
+  if (tenureYears < 1) return '< 1 Year';
+  if (tenureYears <= 3) return '1 - 3 Years';
+  if (tenureYears <= 5) return '3 - 5 Years';
+  if (tenureYears <= 10) return '5 - 10 Years';
+  return '10+ Years';
+}
+
+export function generateDemoEnterpriseSheets(): SheetCollection {
   const sheets: SheetCollection = {
     'Branch Network (Retail)': [],
     'Head Office & Operations': [],
@@ -100,52 +110,50 @@ export function generateDemoHRDataset(): SheetCollection {
 
   let empCounter = 1000;
 
-  // Sheet 1: Branch Network (350 records)
+  // Sheet 1: Branch Network (Retail) (350 records)
   for (let i = 0; i < 350; i++) {
     empCounter++;
     const isFemale = Math.random() < 0.38;
+    const title = isFemale ? 'Ms.' : 'Mr.';
     const firstName = isFemale ? randomChoice(FIRST_NAMES_FEMALE) : randomChoice(FIRST_NAMES_MALE);
     const lastName = randomChoice(LAST_NAMES);
     const fatherName = `${randomChoice(FIRST_NAMES_MALE)} ${lastName}`;
     const fullName = `${firstName} ${lastName}`;
-    
-    const birthYear = randomInt(1970, 2003);
+
+    const birthYear = randomInt(1975, 2003);
     const birthMonth = String(randomInt(1, 12)).padStart(2, '0');
     const birthDay = String(randomInt(1, 28)).padStart(2, '0');
     const dob = `${birthYear}-${birthMonth}-${birthDay}`;
 
-    const maxHireYear = 2026;
-    const minHireYear = Math.max(birthYear + 20, 2010);
-    const hireYear = randomInt(minHireYear, maxHireYear);
+    const hireYear = randomInt(Math.max(birthYear + 20, 2010), 2026);
     const hireMonth = String(randomInt(1, 12)).padStart(2, '0');
     const hireDay = String(randomInt(1, 28)).padStart(2, '0');
     const hireDate = `${hireYear}-${hireMonth}-${hireDay}`;
 
-    const region = randomChoice(REGIONS);
-    const cluster = randomChoice(CLUSTERS[region]);
-    const branchNum = randomInt(101, 280);
-    const branchCode = `BR-${branchNum}`;
-    const isFlagship = branchNum % 7 === 0 ? 'Yes (Flagship)' : 'Standard';
-    const branchCategory = randomChoice(BRANCH_CATEGORIES);
-
-    const groupKey = 'Retail Banking Group';
-    const groupDef = GROUPS_SUBGROUPS[groupKey];
+    const groupDef = GROUPS_SUBGROUPS['Branch Banking Group'];
     const subGroup = randomChoice(groupDef.subGroups);
     const jobRole = randomChoice(groupDef.jobs);
 
+    const region = randomChoice(REGIONS);
+    const cluster = randomChoice(CLUSTERS[region]);
+    const branchNum = randomInt(101, 399);
+    const branchCategory = randomChoice(BRANCH_CATEGORIES);
+    const isFlagship = branchCategory.includes('Corporate') || branchCategory.includes('Hub') ? 'Yes (Flagship)' : 'Standard';
     const userStatus = Math.random() < 0.94 ? 'Active' : (Math.random() < 0.6 ? 'Resigned' : 'On Leave');
+
     const age = 2026 - birthYear;
     const tenureYears = parseFloat((2026 - hireYear + (randomInt(0, 11) / 12)).toFixed(1));
 
     sheets['Branch Network (Retail)'].push({
       employeeNumber: `EMP-${empCounter}`,
+      title,
       fullName,
       userStatus,
-      group: groupKey,
+      group: 'Branch Banking Group',
       subGroup,
       dateOfBirth: dob,
       hireDate,
-      branchCode,
+      branchCode: `BR-${branchNum}`,
       accountNo: `PK92BANK000${empCounter}${randomInt(10, 99)}`,
       cadre: jobRole.cadre,
       grade: jobRole.grade,
@@ -160,12 +168,12 @@ export function generateDemoHRDataset(): SheetCollection {
       supervisor: randomChoice(SUPERVISORS),
       fatherName,
       gender: isFemale ? 'Female' : 'Male',
-      nationalIdentity: `42101-${randomInt(1000000, 9999999)}-${isFemale ? '2' : '1'}`,
-      employmentType: randomChoice(EMPLOYMENT_TYPES),
+      employmentCategory: randomChoice(EMPLOYMENT_CATEGORIES),
       emailAddress: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${empCounter % 100}@apexbank.com`,
-      contactId: `+92-3${randomInt(10, 49)}-${randomInt(1000000, 9999999)}`,
       maritalStatus: randomChoice(MARITAL_STATUSES),
+      nationality: 'Pakistani',
       religion: randomChoice(RELIGIONS),
+      nationalId: `42101-${randomInt(1000000, 9999999)}-${isFemale ? '2' : '1'}`,
       age,
       tenureYears,
       ageGroup: getAgeGroup(age),
@@ -179,6 +187,7 @@ export function generateDemoHRDataset(): SheetCollection {
   for (let i = 0; i < 220; i++) {
     empCounter++;
     const isFemale = Math.random() < 0.44;
+    const title = isFemale ? 'Ms.' : 'Mr.';
     const firstName = isFemale ? randomChoice(FIRST_NAMES_FEMALE) : randomChoice(FIRST_NAMES_MALE);
     const lastName = randomChoice(LAST_NAMES);
     const fatherName = `${randomChoice(FIRST_NAMES_MALE)} ${lastName}`;
@@ -208,6 +217,7 @@ export function generateDemoHRDataset(): SheetCollection {
 
     sheets['Head Office & Operations'].push({
       employeeNumber: `EMP-${empCounter}`,
+      title,
       fullName,
       userStatus,
       group: groupKey,
@@ -229,12 +239,12 @@ export function generateDemoHRDataset(): SheetCollection {
       supervisor: randomChoice(SUPERVISORS),
       fatherName,
       gender: isFemale ? 'Female' : 'Male',
-      nationalIdentity: `35202-${randomInt(1000000, 9999999)}-${isFemale ? '2' : '1'}`,
-      employmentType: randomChoice(EMPLOYMENT_TYPES),
+      employmentCategory: randomChoice(EMPLOYMENT_CATEGORIES),
       emailAddress: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${empCounter % 100}@apexbank.com`,
-      contactId: `+92-3${randomInt(10, 49)}-${randomInt(1000000, 9999999)}`,
       maritalStatus: randomChoice(MARITAL_STATUSES),
+      nationality: 'Pakistani',
       religion: randomChoice(RELIGIONS),
+      nationalId: `35202-${randomInt(1000000, 9999999)}-${isFemale ? '2' : '1'}`,
       age,
       tenureYears,
       ageGroup: getAgeGroup(age),
@@ -248,6 +258,7 @@ export function generateDemoHRDataset(): SheetCollection {
   for (let i = 0; i < 130; i++) {
     empCounter++;
     const isFemale = Math.random() < 0.40;
+    const title = isFemale ? 'Ms.' : 'Mr.';
     const firstName = isFemale ? randomChoice(FIRST_NAMES_FEMALE) : randomChoice(FIRST_NAMES_MALE);
     const lastName = randomChoice(LAST_NAMES);
     const fatherName = `${randomChoice(FIRST_NAMES_MALE)} ${lastName}`;
@@ -277,6 +288,7 @@ export function generateDemoHRDataset(): SheetCollection {
 
     sheets['Corporate & Investment'].push({
       employeeNumber: `EMP-${empCounter}`,
+      title,
       fullName,
       userStatus,
       group: groupKey,
@@ -298,12 +310,12 @@ export function generateDemoHRDataset(): SheetCollection {
       supervisor: randomChoice(SUPERVISORS),
       fatherName,
       gender: isFemale ? 'Female' : 'Male',
-      nationalIdentity: `61101-${randomInt(1000000, 9999999)}-${isFemale ? '2' : '1'}`,
-      employmentType: 'Permanent',
+      employmentCategory: 'Permanent',
       emailAddress: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${empCounter % 100}@apexbank.com`,
-      contactId: `+92-3${randomInt(10, 49)}-${randomInt(1000000, 9999999)}`,
       maritalStatus: randomChoice(MARITAL_STATUSES),
+      nationality: 'Pakistani',
       religion: randomChoice(RELIGIONS),
+      nationalId: `61101-${randomInt(1000000, 9999999)}-${isFemale ? '2' : '1'}`,
       age,
       tenureYears,
       ageGroup: getAgeGroup(age),
