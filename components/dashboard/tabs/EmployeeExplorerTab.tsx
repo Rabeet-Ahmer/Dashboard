@@ -192,19 +192,21 @@ export function EmployeeExplorerTab({ records, activeSheetName }: EmployeeExplor
                 variant="outline"
                 size="sm"
                 onClick={() => exportRecordsToExcel(searchedRecords, `HR_Explorer_${activeSheetName}.xlsx`)}
-                className="flex-1 sm:flex-initial h-8.5 text-xs gap-1.5 rounded-lg cursor-pointer"
+                className="flex-1 sm:flex-initial h-8.5 text-xs gap-1.5 rounded-lg cursor-pointer hover:bg-emerald-500/10 hover:border-emerald-500/30 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+                title={`Export ${searchedRecords.length} records to Excel`}
               >
                 <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
-                <span>Excel</span>
+                <span>Export Excel</span>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => exportRecordsToCSV(searchedRecords, `HR_Explorer_${activeSheetName}.csv`)}
-                className="flex-1 sm:flex-initial h-8.5 text-xs gap-1.5 rounded-lg cursor-pointer"
+                className="flex-1 sm:flex-initial h-8.5 text-xs gap-1.5 rounded-lg cursor-pointer hover:bg-sky-500/10 hover:border-sky-500/30 hover:text-sky-700 dark:hover:text-sky-400 transition-colors"
+                title={`Export ${searchedRecords.length} records to CSV`}
               >
-                <Download className="h-3.5 w-3.5 text-blue-600" />
-                <span>CSV</span>
+                <Download className="h-3.5 w-3.5 text-sky-600" />
+                <span>Export CSV</span>
               </Button>
             </div>
           </div>

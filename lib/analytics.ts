@@ -237,21 +237,38 @@ export function getAgeCohortsDistribution(records: EmployeeRecord[]) {
 }
 
 export function getTenureBracketsDistribution(records: EmployeeRecord[]) {
-  const order = ['< 1 Year', '1 - 3 Years', '3 - 5 Years', '5 - 10 Years', '10+ Years'];
-  const map: Record<string, { tenureGroup: string; count: number }> = {};
+  const maxYear = 10;
+  const buckets: string[] = ['< 1 Year'];
+  for (let y = 1; y < maxYear; y++) {
+    buckets.push(y === 1 ? '1 Year' : `${y} Years`);
+  }
+  buckets.push(`${maxYear}+ Years`);
 
-  for (const o of order) {
-    map[o] = { tenureGroup: o, count: 0 };
+  const counts: Record<string, number> = {};
+  for (const b of buckets) {
+    counts[b] = 0;
   }
 
   for (const r of records) {
-    if (!r.tenureGroup || r.tenureGroup === 'N/A') continue;
-    const tg = r.tenureGroup;
-    if (!map[tg]) map[tg] = { tenureGroup: tg, count: 0 };
-    map[tg].count++;
+    if (typeof r.tenureYears !== 'number' || isNaN(r.tenureYears) || r.tenureYears < 0) continue;
+    const ty = r.tenureYears;
+
+    let bName = '';
+    if (ty < 1) {
+      bName = '< 1 Year';
+    } else if (ty >= maxYear) {
+      bName = `${maxYear}+ Years`;
+    } else {
+      const yr = Math.floor(ty);
+      bName = yr === 1 ? '1 Year' : `${yr} Years`;
+    }
+
+    if (counts[bName] !== undefined) {
+      counts[bName]++;
+    }
   }
 
-  return order.map(k => map[k]).filter(Boolean);
+  return buckets.map(b => ({ tenureGroup: b, count: counts[b] }));
 }
 
 export function getBranchCategoryDistribution(records: EmployeeRecord[]) {
@@ -278,7 +295,7 @@ export function getFlagshipDistribution(records: EmployeeRecord[]) {
   return Object.values(map).sort((a, b) => b.count - a.count);
 }
 
-export function getSupervisorSpan(records: EmployeeRecord[], limit = 8) {
+export function getSupervisorSpan(records: EmployeeRecord[], limit?: number) {
   const map: Record<string, { supervisor: string; directReports: number }> = {};
 
   for (const r of records) {
@@ -287,5 +304,88 @@ export function getSupervisorSpan(records: EmployeeRecord[], limit = 8) {
     map[sup].directReports++;
   }
 
-  return Object.values(map).sort((a, b) => b.directReports - a.directReports).slice(0, limit);
+  const sorted = Object.values(map).sort((a, b) => b.directReports - a.directReports);
+  return typeof limit === 'number' ? sorted.slice(0, limit) : sorted;
 }
+
+export interface BatchOnboardingData {
+  hireDate: string;
+  displayDate: string;
+  og1: number;
+  og2: number;
+  others: number;
+  total: number;
+}
+
+export function getBatchOnboardingDistribution(records: EmployeeRecord[]): BatchOnboardingData[] {
+  const map: Record<string, BatchOnboardingData> = {};
+
+  for (const r of records) {
+    if (!r.hireDate || r.hireDate === 'N/A') continue;
+    const dateStr = r.hireDate.trim();
+    if (!map[dateStr]) {
+      let displayDate = dateStr;
+      try {
+        const d = new Date(dateStr);
+        if (!isNaN(d.getTime())) {
+          const day = String(d.getDate()).padStart(2, '0');
+          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          const month = months[d.getMonth()];
+          const year = d.getFullYear();
+          displayDate = `${day}-${month}-${year}`;
+        }
+      } catch (_) {}
+
+      map[dateStr] = {
+        hireDate: dateStr,
+        displayDate,
+        og1: 0,
+        og2: 0,
+        others: 0,
+        total: 0
+      };
+    }
+
+    const g = (r.grade || '').toLowerCase().replace(/[\s_-]/g, '');
+    const j = (r.job || '').toLowerCase();
+    const p = (r.positionName || '').toLowerCase();
+
+    const isOg1 =
+      g.includes('og1') ||
+      g.includes('ogi') ||
+      g === 'og1' ||
+      g === 'ogi' ||
+      j.includes('og-1') ||
+      j.includes('og-i') ||
+      p.includes('og-1') ||
+      p.includes('og-i') ||
+      g.includes('officergrade1') ||
+      g.includes('officergradei');
+
+    const isOg2 =
+      !isOg1 &&
+      (g.includes('og2') ||
+        g.includes('ogii') ||
+        g === 'og2' ||
+        g === 'ogii' ||
+        j.includes('og-2') ||
+        j.includes('og-ii') ||
+        p.includes('og-2') ||
+        p.includes('og-ii') ||
+        g.includes('officergrade2') ||
+        g.includes('officergradeii'));
+
+    if (isOg1) {
+      map[dateStr].og1++;
+    } else if (isOg2) {
+      map[dateStr].og2++;
+    } else {
+      map[dateStr].others++;
+    }
+    map[dateStr].total++;
+  }
+
+  // Sort chronologically ascending
+  return Object.values(map).sort((a, b) => a.hireDate.localeCompare(b.hireDate));
+}
+

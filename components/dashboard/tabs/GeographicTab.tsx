@@ -17,6 +17,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  LabelList,
   PieChart,
   Pie,
   Cell
@@ -26,13 +27,13 @@ interface GeographicTabProps {
   records: EmployeeRecord[];
 }
 
-const CATEGORY_COLORS = ['#2563eb', '#059669', '#d97706', '#7c3aed', '#0284c7', '#e11d48'];
+const CATEGORY_COLORS = ['#0d9488', '#0284c7', '#6366f1', '#10b981', '#f59e0b', '#fb7185'];
 const FLAGSHIP_COLORS: Record<string, string> = {
-  'Yes (Flagship)': '#2563eb',
-  'Headquarters': '#7c3aed',
-  'Corporate Center': '#0284c7',
-  'Standard': '#71717a',
-  'N/A': '#9ca3af'
+  'Yes (Flagship)': '#0284c7',
+  'Headquarters': '#6366f1',
+  'Corporate Center': '#0d9488',
+  'Standard': '#64748b',
+  'N/A': '#94a3b8'
 };
 
 export function GeographicTab({ records }: GeographicTabProps) {
@@ -106,12 +107,19 @@ export function GeographicTab({ records }: GeographicTabProps) {
           <CardContent className="p-2 sm:p-4 pt-3 sm:pt-4">
             <div className="h-[240px] sm:h-[280px] w-full min-w-0">
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                <BarChart data={categoryData} margin={{ top: 10, right: 15, left: -20, bottom: 35 }}>
+                <BarChart data={categoryData} margin={{ top: 18, right: 15, left: -20, bottom: 35 }}>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
                   <XAxis dataKey="category" tick={{ fontSize: 9 }} angle={-20} textAnchor="end" interval={0} />
                   <YAxis tick={{ fontSize: 10 }} />
                   <Tooltip />
-                  <Bar dataKey="count" name="Staff Strength" fill="#059669" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="count" name="Staff Strength" fill="#0d9488" radius={[2, 2, 0, 0]}>
+                    <LabelList
+                      dataKey="count"
+                      position="top"
+                      offset={6}
+                      className="fill-foreground font-mono text-[10px] font-semibold"
+                    />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -205,12 +213,19 @@ export function GeographicTab({ records }: GeographicTabProps) {
               itemName="branches"
             >
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                <BarChart data={topBranches} layout="vertical" margin={{ top: 5, right: 15, left: 0, bottom: 5 }}>
+                <BarChart data={topBranches} layout="vertical" margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.15} horizontal={false} />
                   <XAxis type="number" tick={{ fontSize: 10 }} />
                   <YAxis type="category" dataKey="branchCode" tick={{ fontSize: 9 }} width={90} interval={0} />
                   <Tooltip />
-                  <Bar dataKey="count" name="Staff Count" fill="#2563eb" radius={[0, 2, 2, 0]} maxBarSize={16} />
+                  <Bar dataKey="count" name="Staff Count" fill="#0284c7" radius={[0, 2, 2, 0]} maxBarSize={16}>
+                    <LabelList
+                      dataKey="count"
+                      position="right"
+                      offset={6}
+                      className="fill-foreground font-mono text-[10px] font-semibold"
+                    />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </ScrollableChartContainer>
@@ -242,12 +257,19 @@ export function GeographicTab({ records }: GeographicTabProps) {
               itemName="clusters"
             >
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                <BarChart data={clusterData} layout="vertical" margin={{ top: 5, right: 15, left: 0, bottom: 5 }}>
+                <BarChart data={clusterData} layout="vertical" margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.15} horizontal={false} />
                   <XAxis type="number" tick={{ fontSize: 10 }} />
                   <YAxis type="category" dataKey="cluster" tick={{ fontSize: 9 }} width={120} interval={0} />
                   <Tooltip />
-                  <Bar dataKey="count" name="Employees" fill="#4f46e5" radius={[0, 2, 2, 0]} maxBarSize={16} />
+                  <Bar dataKey="count" name="Employees" fill="#6366f1" radius={[0, 2, 2, 0]} maxBarSize={16}>
+                    <LabelList
+                      dataKey="count"
+                      position="right"
+                      offset={6}
+                      className="fill-foreground font-mono text-[10px] font-semibold"
+                    />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </ScrollableChartContainer>

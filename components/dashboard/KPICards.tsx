@@ -123,23 +123,57 @@ export function KPICards({ metrics }: KPICardsProps) {
         </CardContent>
       </Card>
 
-      {/* 5. Gender Diversity Ratio */}
+      {/* 5. Gender Diversity Ratio (Dual Male & Female Split) */}
       <Card className="border border-border bg-card shadow-2xs">
         <CardContent className="p-3.5 sm:p-4 space-y-1.5 sm:space-y-2">
           <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
-            <span className="truncate">Diversity (DEI)</span>
+            <span className="flex items-center gap-1 truncate">
+              Gender Split
+              <Tooltip>
+                <TooltipTrigger className="hidden sm:inline">
+                  <Info className="h-3 w-3 text-muted-foreground/70 cursor-pointer" />
+                </TooltipTrigger>
+                <TooltipContent className="text-xs">
+                  Proportion of Male (♂) vs Female (♀) workforce
+                </TooltipContent>
+              </Tooltip>
+            </span>
             <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground shrink-0">
-              ♀ {metrics.genderRatio.femalePercent}%
+              DEI
             </span>
           </div>
-          <div className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-mono">
-            {metrics.genderRatio.femalePercent}% <span className="text-[11px] sm:text-xs font-normal text-muted-foreground font-sans">Female</span>
+
+          {/* Opposite Ends: Male on Left, Female on Right */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              <span className="text-[11px] font-bold text-sky-600 dark:text-sky-400">♂</span>
+              <span className="text-sm sm:text-base font-bold tracking-tight text-foreground font-mono">
+                {metrics.genderRatio.malePercent}%
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-sm sm:text-base font-bold tracking-tight text-foreground font-mono">
+                {metrics.genderRatio.femalePercent}%
+              </span>
+              <span className="text-[11px] font-bold text-rose-500 dark:text-rose-400">♀</span>
+            </div>
           </div>
-          <div className="h-1 w-full bg-blue-600 rounded-full overflow-hidden flex">
+
+          {/* Dual Color Segmented Progress Bar */}
+          <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden flex">
             <div
-              className="bg-rose-500 h-full"
+              className="bg-sky-500 h-full transition-all"
+              style={{ width: `${metrics.genderRatio.malePercent}%` }}
+            />
+            <div
+              className="bg-rose-400 h-full transition-all"
               style={{ width: `${metrics.genderRatio.femalePercent}%` }}
             />
+          </div>
+
+          <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-muted-foreground font-mono">
+            <span className="text-sky-600 dark:text-sky-400 font-medium">Male: {metrics.genderRatio.maleCount}</span>
+            <span className="text-rose-500 dark:text-rose-400 font-medium">Female: {metrics.genderRatio.femaleCount}</span>
           </div>
         </CardContent>
       </Card>

@@ -19,6 +19,7 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  LabelList,
   PieChart,
   Pie,
   Cell
@@ -28,7 +29,29 @@ interface DiversityTabProps {
   records: EmployeeRecord[];
 }
 
-const DIVERSITY_COLORS = ['#e11d48', '#2563eb', '#059669', '#d97706', '#7c3aed', '#64748b'];
+// Soft, harmonious palette for Generational Age Cohorts
+const AGE_COHORT_COLORS: Record<string, string> = {
+  '< 25 yrs': '#2dd4bf',    // Soft Mint / Cyan (Gen-Z)
+  '25 - 34 yrs': '#818cf8', // Soft Iris / Lavender (Millennials)
+  '35 - 44 yrs': '#f59e0b', // Warm Amber (Mid-career)
+  '45 - 54 yrs': '#fb923c', // Warm Peach / Apricot (Experienced)
+  '55+ yrs': '#a8a29e'      // Warm Stone Greige (Senior Executive)
+};
+
+const AGE_PALETTE = ['#2dd4bf', '#818cf8', '#f59e0b', '#fb923c', '#a8a29e'];
+
+// Soft, comforting palette for Marital Status Profile (Distinct from Gender)
+const MARITAL_COLORS: Record<string, string> = {
+  Married: '#f59e0b',     // Warm Honey Amber
+  Single: '#818cf8',      // Soft Lavender / Iris
+  Divorced: '#14b8a6',    // Calming Seafoam Mint
+  Separated: '#38bdf8',   // Soft Glacier Sky
+  Widowed: '#a8a29e',     // Warm Stone Greige
+  Unassigned: '#94a3b8',  // Soft Slate
+  'N/A': '#94a3b8'
+};
+
+const MARITAL_PALETTE = ['#f59e0b', '#818cf8', '#14b8a6', '#fb923c', '#a8a29e', '#94a3b8'];
 
 export function DiversityTab({ records }: DiversityTabProps) {
   const [mounted, setMounted] = useState(false);
@@ -94,15 +117,36 @@ export function DiversityTab({ records }: DiversityTabProps) {
                   <YAxis tick={{ fontSize: 10 }} />
                   <Tooltip />
                   <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '6px' }} />
-                  <Bar dataKey="male" name="Male (♂)" fill="#2563eb" stackId="a" />
-                  <Bar dataKey="female" name="Female (♀)" fill="#e11d48" stackId="a" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="male" name="Male (♂)" fill="#0284c7" stackId="a">
+                    <LabelList
+                      dataKey="male"
+                      position="center"
+                      className="fill-white font-mono text-[8px] font-medium"
+                      formatter={(val: unknown) => (typeof val === 'number' && val > 0 ? String(val) : '')}
+                    />
+                  </Bar>
+                  <Bar dataKey="female" name="Female (♀)" fill="#fb7185" stackId="a" radius={[2, 2, 0, 0]}>
+                    <LabelList
+                      dataKey="female"
+                      position="center"
+                      className="fill-white font-mono text-[8px] font-medium"
+                      formatter={(val: unknown) => (typeof val === 'number' && val > 0 ? String(val) : '')}
+                    />
+                    <LabelList
+                      dataKey="total"
+                      position="top"
+                      offset={5}
+                      className="fill-foreground font-mono text-[9px] font-bold"
+                      formatter={(val: unknown) => (typeof val === 'number' && val > 0 ? String(val) : '')}
+                    />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </ScrollableChartContainer>
           </CardContent>
         </Card>
 
-        {/* 2. Age Generational Cohorts */}
+        {/* 2. Age Generational Cohorts (Dedicated Soft Generational Colors) */}
         <Card className="border border-border bg-card shadow-2xs">
           <CardHeader className="p-3.5 sm:p-4 pb-2 border-b border-border/40 flex flex-row items-center justify-between">
             <div>
@@ -110,7 +154,7 @@ export function DiversityTab({ records }: DiversityTabProps) {
                 Age Demographic Cohorts
               </CardTitle>
               <CardDescription className="text-[11px] sm:text-xs">
-                Generational distribution derived from DOB
+                Generational distribution across career brackets
               </CardDescription>
             </div>
             <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground">
@@ -120,16 +164,62 @@ export function DiversityTab({ records }: DiversityTabProps) {
           <CardContent className="p-2 sm:p-4 pt-3 sm:pt-4">
             <div className="h-[240px] sm:h-[280px] w-full min-w-0">
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                <BarChart data={ageData} margin={{ top: 10, right: 15, left: -20, bottom: 5 }}>
+                <BarChart data={ageData} margin={{ top: 18, right: 15, left: -20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
                   <XAxis dataKey="ageGroup" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 10 }} />
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '6px' }} />
-                  <Bar dataKey="male" name="Male" fill="#2563eb" stackId="a" />
-                  <Bar dataKey="female" name="Female" fill="#e11d48" stackId="a" radius={[2, 2, 0, 0]} />
+                  <Tooltip
+                    content={({ active, payload, label }) => {
+                      if (!active || !payload || !payload.length) return null;
+                      const val = payload[0]?.value || 0;
+                      const totalCount = records.length || 1;
+                      const pct = ((Number(val) / totalCount) * 100).toFixed(1);
+                      return (
+                        <div className="rounded-lg border border-border bg-popover p-2.5 shadow-md text-xs space-y-1">
+                          <p className="font-semibold text-foreground">{label}</p>
+                          <p className="text-primary">
+                            Headcount: <strong className="font-mono">{val}</strong> staff ({pct}%)
+                          </p>
+                        </div>
+                      );
+                    }}
+                  />
+                  <Bar dataKey="count" name="Employees" radius={[2, 2, 0, 0]} maxBarSize={28}>
+                    {ageData.map((entry, index) => (
+                      <Cell
+                        key={`age-cell-${index}`}
+                        fill={AGE_COHORT_COLORS[entry.ageGroup] || AGE_PALETTE[index % AGE_PALETTE.length]}
+                      />
+                    ))}
+                    <LabelList
+                      dataKey="count"
+                      position="top"
+                      offset={5}
+                      className="fill-foreground font-mono text-[9px] font-bold"
+                      formatter={(val: unknown) => (typeof val === 'number' && val > 0 ? String(val) : '')}
+                    />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
+            </div>
+            {/* Soft Cohort Legend Pills */}
+            <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
+              {ageData.map((item, idx) => (
+                <div
+                  key={`age-pill-${item.ageGroup}-${idx}`}
+                  className="flex items-center gap-1 text-[10px] text-muted-foreground px-2 py-0.5 rounded bg-muted/50 border border-border"
+                >
+                  <span
+                    className="h-2 w-2 rounded-full shrink-0"
+                    style={{
+                      backgroundColor: AGE_COHORT_COLORS[item.ageGroup] || AGE_PALETTE[idx % AGE_PALETTE.length]
+                    }}
+                  />
+                  <span className="truncate">
+                    {item.ageGroup}: <strong className="text-foreground font-mono">{item.count}</strong>
+                  </span>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -145,7 +235,7 @@ export function DiversityTab({ records }: DiversityTabProps) {
                 Tenure & Retention Brackets
               </CardTitle>
               <CardDescription className="text-[11px] sm:text-xs">
-                Employee service longevity cohorts
+                Employee service longevity cohorts (single-year breakdown)
               </CardDescription>
             </div>
             <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground">
@@ -155,19 +245,34 @@ export function DiversityTab({ records }: DiversityTabProps) {
           <CardContent className="p-2 sm:p-4 pt-3 sm:pt-4">
             <div className="h-[240px] sm:h-[260px] w-full min-w-0">
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                <BarChart data={tenureData} margin={{ top: 10, right: 15, left: -20, bottom: 5 }}>
+                <BarChart data={tenureData} margin={{ top: 20, right: 15, left: -20, bottom: 25 }}>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
-                  <XAxis dataKey="tenureGroup" tick={{ fontSize: 10 }} />
+                  <XAxis
+                    dataKey="tenureGroup"
+                    tick={{ fontSize: 9 }}
+                    angle={-22}
+                    textAnchor="end"
+                    interval={0}
+                    height={32}
+                  />
                   <YAxis tick={{ fontSize: 10 }} />
                   <Tooltip />
-                  <Bar dataKey="count" name="Employees" fill="#4f46e5" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="count" name="Employees" fill="#0d9488" radius={[2, 2, 0, 0]}>
+                    <LabelList
+                      dataKey="count"
+                      position="top"
+                      offset={5}
+                      className="fill-foreground font-mono text-[9px] font-bold"
+                      formatter={(val: unknown) => (typeof val === 'number' && val > 0 ? String(val) : '')}
+                    />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        {/* 4. Marital Status */}
+        {/* 4. Marital Status (Warm, Comforting & Distinct Palette) */}
         <Card className="border border-border bg-card shadow-2xs">
           <CardHeader className="p-3.5 sm:p-4 pb-2 border-b border-border/40 flex flex-row items-center justify-between">
             <div>
@@ -175,7 +280,7 @@ export function DiversityTab({ records }: DiversityTabProps) {
                 Marital Status Profile
               </CardTitle>
               <CardDescription className="text-[11px] sm:text-xs">
-                Employee demographics
+                Employee demographic composition
               </CardDescription>
             </div>
             <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground">
@@ -199,7 +304,7 @@ export function DiversityTab({ records }: DiversityTabProps) {
                     {maritalData.map((entry, index) => (
                       <Cell
                         key={`cell-${index}`}
-                        fill={DIVERSITY_COLORS[index % DIVERSITY_COLORS.length]}
+                        fill={MARITAL_COLORS[entry.status] || MARITAL_PALETTE[index % MARITAL_PALETTE.length]}
                       />
                     ))}
                   </Pie>
@@ -207,12 +312,19 @@ export function DiversityTab({ records }: DiversityTabProps) {
                 </PieChart>
               </ResponsiveContainer>
             </div>
+            {/* Soft Legend Pills */}
             <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
               {maritalData.map((item, idx) => (
-                <div key={`marital-${item.status}-${idx}`} className="flex items-center gap-1 text-[11px] text-muted-foreground px-2 py-0.5 rounded bg-muted/60 border border-border">
+                <div
+                  key={`marital-${item.status}-${idx}`}
+                  className="flex items-center gap-1 text-[10px] text-muted-foreground px-2 py-0.5 rounded bg-muted/60 border border-border"
+                >
                   <span
                     className="h-2 w-2 rounded-full shrink-0"
-                    style={{ backgroundColor: DIVERSITY_COLORS[idx % DIVERSITY_COLORS.length] }}
+                    style={{
+                      backgroundColor:
+                        MARITAL_COLORS[item.status] || MARITAL_PALETTE[idx % MARITAL_PALETTE.length]
+                    }}
                   />
                   <span className="truncate">
                     {item.status}: <strong className="text-foreground font-mono">{item.count}</strong>

@@ -253,7 +253,6 @@ export default function DashboardPage() {
           activeSheetName={filters.sheet}
           filteredCount={filteredRecords.length}
           totalCount={currentSheetRecords.length}
-          filteredRecords={filteredRecords}
           showFilters={showFilters}
           onToggleFilters={() => setShowFilters(!showFilters)}
           activeFilterCount={activeFilterCount}
