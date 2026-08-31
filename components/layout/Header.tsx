@@ -61,17 +61,17 @@ export function Header({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-base md:text-lg font-bold tracking-tight text-foreground flex items-center gap-1.5">
-                Apex<span className="text-blue-500 font-extrabold">HQ</span>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                  HR Lens
+                SEAP<span className="text-primary font-extrabold">HQ</span>
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20">
+                  Portal
                 </span>
               </h1>
             </div>
             <p className="text-[11px] text-muted-foreground hidden sm:flex items-center gap-1.5">
-              <span>Enterprise People Intelligence</span>
+              <span>Science And Engineering Associate Program</span>
               <span>•</span>
               <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5 font-medium">
-                <ShieldCheck className="h-3 w-3" /> Client-Side Confidential
+                <ShieldCheck className="h-3 w-3" /> Confidential
               </span>
             </p>
           </div>

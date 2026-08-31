@@ -191,7 +191,7 @@ export function EmployeeExplorerTab({ records, activeSheetName }: EmployeeExplor
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => exportRecordsToExcel(searchedRecords, `HR_Explorer_${activeSheetName}.xlsx`)}
+                onClick={() => exportRecordsToExcel(searchedRecords, `SEAP_Explorer_${activeSheetName}.xlsx`)}
                 className="flex-1 sm:flex-initial h-8.5 text-xs gap-1.5 rounded-lg cursor-pointer hover:bg-emerald-500/10 hover:border-emerald-500/30 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
                 title={`Export ${searchedRecords.length} records to Excel`}
               >
@@ -201,7 +201,7 @@ export function EmployeeExplorerTab({ records, activeSheetName }: EmployeeExplor
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => exportRecordsToCSV(searchedRecords, `HR_Explorer_${activeSheetName}.csv`)}
+                onClick={() => exportRecordsToCSV(searchedRecords, `SEAP_Explorer_${activeSheetName}.csv`)}
                 className="flex-1 sm:flex-initial h-8.5 text-xs gap-1.5 rounded-lg cursor-pointer hover:bg-sky-500/10 hover:border-sky-500/30 hover:text-sky-700 dark:hover:text-sky-400 transition-colors"
                 title={`Export ${searchedRecords.length} records to CSV`}
               >

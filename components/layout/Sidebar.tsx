@@ -102,19 +102,21 @@ export function Sidebar({
         {/* Brand Header */}
         <div className="flex items-center justify-between px-1 py-0.5">
           <div className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
+            <div className="h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shadow-xs">
               <Briefcase className="h-4 w-4" />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-bold text-sm tracking-tight text-foreground">
-                  Apex HR
+                  SEAP
                 </span>
-                <span className="text-[10px] font-medium px-1.5 py-0.2 rounded bg-muted text-muted-foreground">
-                  Enterprise
+                <span className="text-[10px] font-medium px-1.5 py-0.2 rounded bg-primary/10 text-primary border border-primary/20">
+                  Portal
                 </span>
               </div>
-              <p className="text-[11px] text-muted-foreground">Workforce Intelligence</p>
+              <p className="text-[10px] text-muted-foreground leading-tight truncate max-w-[150px]" title="Science And Engineering Associate Program">
+                Science & Eng. Program
+              </p>
             </div>
           </div>
 

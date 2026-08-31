@@ -83,15 +83,15 @@ export function ExcelUploadHero({ onDataLoaded }: ExcelUploadHeroProps) {
       <div className="max-w-2xl w-full space-y-4 sm:space-y-6">
         {/* Header Branding */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 rounded-full bg-muted border border-border text-[11px] sm:text-xs font-medium text-muted-foreground">
-            <Database className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
-            <span>Local SQLite Database • Persistent & Fast</span>
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[11px] sm:text-xs font-medium text-primary">
+            <Database className="h-3.5 w-3.5 shrink-0" />
+            <span>SEAP Central Database • Persistent & Fast</span>
           </div>
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-foreground">
-            Enterprise Workforce Analytics
+            Science And Engineering Associate Program (SEAP)
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
-            Upload your multi-sheet HR Excel workbook or link it with the background watcher to auto-sync directly into SQLite.
+            Upload your SEAP multi-sheet HR Excel workbook or connect directly to explore program workforce analytics and talent cohorts.
           </p>
         </div>
 

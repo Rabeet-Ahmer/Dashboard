@@ -10,8 +10,8 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Apex HR • Enterprise Workforce Analytics",
-  description: "Next.js Excel-Powered Multi-Sheet HR Intelligence Dashboard",
+  title: "SEAP • Science And Engineering Associate Program",
+  description: "Science And Engineering Associate Program (SEAP) Workforce Intelligence & Talent Analytics Dashboard",
 };
 
 export default function RootLayout({

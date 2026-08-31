@@ -353,8 +353,8 @@ export function parseExcelWorkbook(buffer: ArrayBuffer): SheetCollection {
   return sheetsData;
 }
 
-// Export records to Excel file matching the schema
-export function exportRecordsToExcel(records: EmployeeRecord[], filename: string = 'HR_Workforce_Export.xlsx') {
+// Export records to Excel workbook matching the schema
+export function exportRecordsToExcel(records: EmployeeRecord[], filename: string = 'SEAP_Workforce_Export.xlsx') {
   const exportData = records.map(r => ({
     'EMPLOYEE_NUMBER': r.employeeNumber,
     'TITLE': r.title,
@@ -395,7 +395,7 @@ export function exportRecordsToExcel(records: EmployeeRecord[], filename: string
 }
 
 // Export records to CSV file matching the schema
-export function exportRecordsToCSV(records: EmployeeRecord[], filename: string = 'HR_Workforce_Export.csv') {
+export function exportRecordsToCSV(records: EmployeeRecord[], filename: string = 'SEAP_Workforce_Export.csv') {
   const exportData = records.map(r => ({
     'EMPLOYEE_NUMBER': r.employeeNumber,
     'TITLE': r.title,
