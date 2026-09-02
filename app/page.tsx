@@ -9,7 +9,7 @@ import { GlobalFilterBar } from '@/components/filters/GlobalFilterBar';
 import { KPICards } from '@/components/dashboard/KPICards';
 import { OverviewTab } from '@/components/dashboard/tabs/OverviewTab';
 import { HierarchyTab } from '@/components/dashboard/tabs/HierarchyTab';
-import { GeographicTab } from '@/components/dashboard/tabs/GeographicTab';
+import { SupervisorTab } from '@/components/dashboard/tabs/SupervisorTab';
 import { DiversityTab } from '@/components/dashboard/tabs/DiversityTab';
 import { EmployeeExplorerTab } from '@/components/dashboard/tabs/EmployeeExplorerTab';
 import { ExcelDropzoneModal } from '@/components/upload/ExcelDropzoneModal';
@@ -38,11 +38,11 @@ const TAB_CONFIGS: Record<string, { title: string; subtitle: string }> = {
   },
   hierarchy: {
     title: 'Organization & Cadres',
-    subtitle: 'Hierarchical breakdown across job grades, staff cadres, and leadership span of control.'
+    subtitle: 'Hierarchical breakdown across job grades, staff cadres, and employment categories.'
   },
-  geographic: {
-    title: 'Geography & Branches',
-    subtitle: 'Branch network distribution, cluster concentration, and flagship hub staffing.'
+  supervisors: {
+    title: 'Supervisor Span & Reporting Teams',
+    subtitle: 'Executive supervisor directory, managerial span metrics, and direct reporting team rosters.'
   },
   diversity: {
     title: 'Demographics & Diversity (DEI)',
@@ -290,7 +290,7 @@ export default function DashboardPage() {
           <div className="pt-1 sm:pt-2">
             {activeTab === 'overview' && <OverviewTab records={filteredRecords} />}
             {activeTab === 'hierarchy' && <HierarchyTab records={filteredRecords} />}
-            {activeTab === 'geographic' && <GeographicTab records={filteredRecords} />}
+            {activeTab === 'supervisors' && <SupervisorTab records={filteredRecords} />}
             {activeTab === 'diversity' && <DiversityTab records={filteredRecords} />}
             {activeTab === 'explorer' && (
               <EmployeeExplorerTab records={filteredRecords} activeSheetName={filters.sheet} />
@@ -300,7 +300,7 @@ export default function DashboardPage() {
 
         {/* Footer */}
         <footer className="border-t border-border py-3.5 px-4 sm:px-8 text-[11px] sm:text-xs text-muted-foreground flex flex-col sm:flex-row items-center justify-between gap-1.5 bg-sidebar mt-auto">
-          <span>Apex HR Analytics • Enterprise Workforce Intelligence</span>
+          <span>SEAP • Science And Engineering Associate Program</span>
           <span>SQLite Database: data/workforce.db • 29 Schema Attributes</span>
         </footer>
       </div>

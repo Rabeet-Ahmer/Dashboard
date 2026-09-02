@@ -13,7 +13,7 @@ import {
 import {
   LayoutDashboard,
   Building2,
-  MapPin,
+  Network,
   HeartHandshake,
   Users,
   UploadCloud,
@@ -65,13 +65,13 @@ export function Sidebar({
       id: 'hierarchy',
       label: 'Organization & Cadres',
       icon: Building2,
-      description: 'Grades, roles & hierarchy',
+      description: 'Grades, levels & categories',
     },
     {
-      id: 'geographic',
-      label: 'Geography & Branches',
-      icon: MapPin,
-      description: 'Regional branch network',
+      id: 'supervisors',
+      label: 'Supervisor Span & Teams',
+      icon: Network,
+      description: 'Manager hierarchy & teams',
     },
     {
       id: 'diversity',

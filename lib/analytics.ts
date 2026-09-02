@@ -217,32 +217,75 @@ export function getTopPositions(records: EmployeeRecord[], limit = 10) {
 }
 
 export function getAgeCohortsDistribution(records: EmployeeRecord[]) {
-  const order = ['< 25 yrs', '25 - 34 yrs', '35 - 44 yrs', '45 - 54 yrs', '55+ yrs'];
-  const map: Record<string, { ageGroup: string; count: number; female: number; male: number }> = {};
+  const targetYears = [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32];
+  const allBuckets: string[] = ['< 20 yrs', ...targetYears.map(y => `${y} yrs`), '33+ yrs'];
 
-  for (const o of order) {
-    map[o] = { ageGroup: o, count: 0, female: 0, male: 0 };
+  const map: Record<string, { ageGroup: string; count: number; female: number; male: number }> = {};
+  for (const b of allBuckets) {
+    map[b] = { ageGroup: b, count: 0, female: 0, male: 0 };
   }
 
   for (const r of records) {
-    if (!r.ageGroup || r.ageGroup === 'N/A') continue;
-    const ag = r.ageGroup;
-    if (!map[ag]) map[ag] = { ageGroup: ag, count: 0, female: 0, male: 0 };
-    map[ag].count++;
-    if ((r.gender || '').toLowerCase().startsWith('f')) map[ag].female++;
-    else if ((r.gender || '').toLowerCase().startsWith('m')) map[ag].male++;
+    if (typeof r.age !== 'number' || isNaN(r.age) || r.age <= 0) continue;
+    const a = Math.floor(r.age);
+    let bName = '';
+    if (a < 20) bName = '< 20 yrs';
+    else if (a > 32) bName = '33+ yrs';
+    else bName = `${a} yrs`;
+
+    if (map[bName]) {
+      map[bName].count++;
+      if ((r.gender || '').toLowerCase().startsWith('f')) map[bName].female++;
+      else if ((r.gender || '').toLowerCase().startsWith('m')) map[bName].male++;
+    }
   }
 
-  return order.map(k => map[k]).filter(Boolean);
+  // Include 20-32 always, and include < 20 / 33+ if non-zero
+  return allBuckets
+    .filter(b => {
+      if (b === '< 20 yrs' || b === '33+ yrs') return map[b].count > 0;
+      return true;
+    })
+    .map(b => map[b]);
+}
+
+export function formatTenureReadable(tenureYears: number): { display: string; unit: string; fullText: string } {
+  if (typeof tenureYears !== 'number' || isNaN(tenureYears) || tenureYears <= 0) {
+    return { display: 'N/A', unit: '', fullText: 'No tenure recorded' };
+  }
+
+  const totalMonths = Math.round(tenureYears * 12);
+  if (totalMonths < 1) {
+    return { display: '< 1', unit: 'month', fullText: 'Less than 1 month' };
+  }
+  if (totalMonths < 12) {
+    return {
+      display: `${totalMonths}`,
+      unit: totalMonths === 1 ? 'month' : 'months',
+      fullText: `${totalMonths} ${totalMonths === 1 ? 'month' : 'months'}`
+    };
+  }
+
+  const years = Math.floor(totalMonths / 12);
+  const remainingMonths = totalMonths % 12;
+
+  if (remainingMonths === 0) {
+    return {
+      display: `${years}`,
+      unit: years === 1 ? 'year' : 'years',
+      fullText: `${years} ${years === 1 ? 'year' : 'years'}`
+    };
+  }
+
+  return {
+    display: `${years}y ${remainingMonths}m`,
+    unit: '',
+    fullText: `${years} ${years === 1 ? 'year' : 'years'} ${remainingMonths} ${remainingMonths === 1 ? 'month' : 'months'}`
+  };
 }
 
 export function getTenureBracketsDistribution(records: EmployeeRecord[]) {
-  const maxYear = 10;
-  const buckets: string[] = ['< 1 Year'];
-  for (let y = 1; y < maxYear; y++) {
-    buckets.push(y === 1 ? '1 Year' : `${y} Years`);
-  }
-  buckets.push(`${maxYear}+ Years`);
+  const buckets: string[] = ['< 1 month', '< 6 months', '< 1 year', '1 year', '2 years', '3 years', '4+ years'];
 
   const counts: Record<string, number> = {};
   for (const b of buckets) {
@@ -252,15 +295,23 @@ export function getTenureBracketsDistribution(records: EmployeeRecord[]) {
   for (const r of records) {
     if (typeof r.tenureYears !== 'number' || isNaN(r.tenureYears) || r.tenureYears < 0) continue;
     const ty = r.tenureYears;
+    const totalMonths = Math.round(ty * 12);
 
     let bName = '';
-    if (ty < 1) {
-      bName = '< 1 Year';
-    } else if (ty >= maxYear) {
-      bName = `${maxYear}+ Years`;
+    if (totalMonths < 1) {
+      bName = '< 1 month';
+    } else if (totalMonths < 6) {
+      bName = '< 6 months';
+    } else if (totalMonths < 12) {
+      bName = '< 1 year';
+    } else if (ty < 2) {
+      bName = '1 year';
+    } else if (ty < 3) {
+      bName = '2 years';
+    } else if (ty < 4) {
+      bName = '3 years';
     } else {
-      const yr = Math.floor(ty);
-      bName = yr === 1 ? '1 Year' : `${yr} Years`;
+      bName = '4+ years';
     }
 
     if (counts[bName] !== undefined) {

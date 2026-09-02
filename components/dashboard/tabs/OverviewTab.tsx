@@ -5,9 +5,7 @@ import { EmployeeRecord } from '@/types/hr';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ScrollableChartContainer } from '@/components/dashboard/ScrollableChartContainer';
 import {
-  getRegionalDistribution,
   getGroupDistribution,
   getBatchOnboardingDistribution,
   getUserStatusDistribution
@@ -46,7 +44,6 @@ export function OverviewTab({ records }: OverviewTabProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  const regionalData = React.useMemo(() => getRegionalDistribution(records), [records]);
   const groupData = React.useMemo(() => getGroupDistribution(records), [records]);
   const batchData = React.useMemo(() => getBatchOnboardingDistribution(records), [records]);
   const statusData = React.useMemo(() => getUserStatusDistribution(records), [records]);
@@ -54,10 +51,7 @@ export function OverviewTab({ records }: OverviewTabProps) {
   if (!mounted) {
     return (
       <div className="space-y-4 sm:space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          <Skeleton className="h-[380px] rounded-xl" />
-          <Skeleton className="h-[380px] rounded-xl" />
-        </div>
+        <Skeleton className="h-[300px] rounded-xl" />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           <Skeleton className="h-[280px] rounded-xl lg:col-span-2" />
           <Skeleton className="h-[280px] rounded-xl" />
@@ -66,200 +60,82 @@ export function OverviewTab({ records }: OverviewTabProps) {
     );
   }
 
-  // Calculate dynamic width for batch chart horizontal scroll if many batches exist
-  const batchChartMinWidth = Math.max(100, batchData.length * 52);
-
   return (
     <div className="space-y-5 sm:space-y-6">
-      {/* 1. Top Row: Realigned Side-by-Side (Both Scrollable & Visible Numbers) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        {/* Regional Workforce Strength (Side-by-Side Scrollable) */}
-        <Card className="border border-border bg-card shadow-2xs">
-          <CardHeader className="p-4 pb-2 border-b border-border/40 flex flex-row items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <CardTitle className="text-xs sm:text-sm font-semibold text-foreground">
-                  Regional Workforce Strength
-                </CardTitle>
-                {regionalData.length > 7 && (
-                  <Badge variant="secondary" className="text-[10px] font-normal text-muted-foreground">
-                    {regionalData.length} Regions
-                  </Badge>
-                )}
-              </div>
-              <CardDescription className="text-[11px] sm:text-xs mt-0.5">
-                Active vs total staff distribution
-              </CardDescription>
+      {/* 1. Top Row: Business Group Headcount (Full Width, Vertical Standing Bars, No Scroll) */}
+      <Card className="border border-border bg-card shadow-2xs">
+        <CardHeader className="p-4 pb-2 border-b border-border/40 flex flex-row items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-xs sm:text-sm font-semibold text-foreground">
+                Business Group Headcount
+              </CardTitle>
+              {groupData.length > 0 && (
+                <Badge variant="secondary" className="text-[10px] font-normal text-muted-foreground">
+                  {groupData.length} Groups
+                </Badge>
+              )}
             </div>
-            <span className="text-[10px] font-mono text-muted-foreground px-1.5 py-0.5 rounded bg-muted">
-              REGION
-            </span>
-          </CardHeader>
-          <CardContent className="p-2 sm:p-3">
-            <ScrollableChartContainer
-              dataLength={regionalData.length}
-              itemHeight={44}
-              minHeight={280}
-              maxViewportHeight={340}
-              threshold={7}
-              itemName="regions"
-            >
-              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                <BarChart
-                  data={regionalData}
-                  layout="vertical"
-                  margin={{ top: 5, right: 35, left: 0, bottom: 5 }}
-                  barCategoryGap="20%"
+            <CardDescription className="text-[11px] sm:text-xs mt-0.5">
+              Staff strength across main business divisions
+            </CardDescription>
+          </div>
+          <span className="text-[10px] font-mono text-muted-foreground px-1.5 py-0.5 rounded bg-muted">
+            GROUP
+          </span>
+        </CardHeader>
+        <CardContent className="p-3 sm:p-4 pt-4">
+          <div className="h-[250px] sm:h-[280px] w-full min-w-0">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+              <BarChart
+                data={groupData}
+                margin={{ top: 22, right: 15, left: -20, bottom: 35 }}
+                barCategoryGap="18%"
+              >
+                <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
+                <XAxis
+                  dataKey="group"
+                  tick={{ fontSize: 9 }}
+                  angle={-18}
+                  textAnchor="end"
+                  interval={0}
+                  height={42}
+                />
+                <YAxis tick={{ fontSize: 10 }} />
+                <Tooltip
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload || !payload.length) return null;
+                    const val = payload[0]?.value || 0;
+                    return (
+                      <div className="rounded-lg border border-border bg-popover p-2.5 shadow-md text-xs space-y-1">
+                        <p className="font-semibold text-foreground border-b border-border pb-1">{label}</p>
+                        <p className="text-indigo-600 dark:text-indigo-400">
+                          Headcount: <strong className="font-mono font-bold">{val}</strong> staff
+                        </p>
+                      </div>
+                    );
+                  }}
+                />
+                <Bar
+                  dataKey="count"
+                  name="Employees"
+                  fill="#3b82f6"
+                  radius={[2, 2, 0, 0]}
+                  maxBarSize={38}
                 >
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.15} horizontal={false} />
-                  <XAxis
-                    type="number"
-                    tick={{ fontSize: 10 }}
-                    tickLine={false}
-                    axisLine={{ stroke: 'var(--border)' }}
-                  />
-                  <YAxis
-                    type="category"
-                    dataKey="region"
-                    tick={{ fontSize: 10 }}
-                    tickLine={false}
-                    axisLine={{ stroke: 'var(--border)' }}
-                    width={160}
-                    interval={0}
-                  />
-                  <Tooltip
-                    content={({ active, payload, label }) => {
-                      if (!active || !payload || !payload.length) return null;
-                      const activeVal = payload.find(p => p.dataKey === 'active')?.value || 0;
-                      const totalVal = payload.find(p => p.dataKey === 'count')?.value || 0;
-                      return (
-                        <div className="rounded-lg border border-border bg-popover p-2.5 shadow-md text-xs space-y-1">
-                          <p className="font-semibold text-foreground">{label}</p>
-                          <p className="text-blue-600 dark:text-blue-400">
-                            Active Staff: <strong className="font-mono font-bold">{activeVal}</strong>
-                          </p>
-                          <p className="text-muted-foreground">
-                            Total Headcount: <strong className="font-mono font-bold text-foreground">{totalVal}</strong>
-                          </p>
-                        </div>
-                      );
-                    }}
-                  />
-                  <Legend
-                    wrapperStyle={{ fontSize: '10px', paddingTop: '6px' }}
-                    iconType="circle"
-                    iconSize={7}
-                  />
-                  <Bar dataKey="active" name="Active Staff" fill="#0d9488" radius={[0, 2, 2, 0]} maxBarSize={14}>
-                    <LabelList
-                      dataKey="active"
-                      position="insideRight"
-                      className="fill-white font-mono text-[8px] font-medium"
-                      formatter={(val: unknown) => (typeof val === 'number' && val > 0 ? String(val) : '')}
-                    />
-                  </Bar>
-                  <Bar dataKey="count" name="Total Headcount" fill="#2dd4bf" radius={[0, 2, 2, 0]} maxBarSize={14}>
-                    <LabelList
-                      dataKey="count"
-                      position="right"
-                      offset={5}
-                      className="fill-foreground font-mono text-[9px] font-bold"
-                    />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </ScrollableChartContainer>
-          </CardContent>
-        </Card>
-
-        {/* Business Group Headcount (Side-by-Side Scrollable) */}
-        <Card className="border border-border bg-card shadow-2xs">
-          <CardHeader className="p-4 pb-2 border-b border-border/40 flex flex-row items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <CardTitle className="text-xs sm:text-sm font-semibold text-foreground">
-                  Business Group Headcount
-                </CardTitle>
-                {groupData.length > 7 && (
-                  <Badge variant="secondary" className="text-[10px] font-normal text-muted-foreground">
-                    {groupData.length} Groups
-                  </Badge>
-                )}
-              </div>
-              <CardDescription className="text-[11px] sm:text-xs mt-0.5">
-                Staff strength across main business divisions
-              </CardDescription>
-            </div>
-            <span className="text-[10px] font-mono text-muted-foreground px-1.5 py-0.5 rounded bg-muted">
-              GROUP
-            </span>
-          </CardHeader>
-          <CardContent className="p-2 sm:p-3">
-            <ScrollableChartContainer
-              dataLength={groupData.length}
-              itemHeight={40}
-              minHeight={280}
-              maxViewportHeight={340}
-              threshold={7}
-              itemName="groups"
-            >
-              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                <BarChart
-                  data={groupData}
-                  layout="vertical"
-                  margin={{ top: 5, right: 35, left: 0, bottom: 5 }}
-                  barCategoryGap="18%"
-                >
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.15} horizontal={false} />
-                  <XAxis
-                    type="number"
-                    tick={{ fontSize: 10 }}
-                    tickLine={false}
-                    axisLine={{ stroke: 'var(--border)' }}
-                  />
-                  <YAxis
-                    type="category"
-                    dataKey="group"
-                    tick={{ fontSize: 10 }}
-                    tickLine={false}
-                    axisLine={{ stroke: 'var(--border)' }}
-                    width={170}
-                    interval={0}
-                  />
-                  <Tooltip
-                    content={({ active, payload, label }) => {
-                      if (!active || !payload || !payload.length) return null;
-                      const val = payload[0]?.value || 0;
-                      return (
-                        <div className="rounded-lg border border-border bg-popover p-2.5 shadow-md text-xs space-y-1">
-                          <p className="font-semibold text-foreground">{label}</p>
-                          <p className="text-indigo-600 dark:text-indigo-400">
-                            Headcount: <strong className="font-mono font-bold">{val}</strong> staff
-                          </p>
-                        </div>
-                      );
-                    }}
-                  />
-                  <Bar
+                  <LabelList
                     dataKey="count"
-                    name="Employees"
-                    fill="#6366f1"
-                    radius={[0, 2, 2, 0]}
-                    maxBarSize={14}
-                  >
-                    <LabelList
-                      dataKey="count"
-                      position="right"
-                      offset={5}
-                      className="fill-foreground font-mono text-[9px] font-bold"
-                    />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </ScrollableChartContainer>
-          </CardContent>
-        </Card>
-      </div>
+                    position="top"
+                    offset={5}
+                    className="fill-foreground font-mono text-[10px] font-bold"
+                    formatter={(val: unknown) => (typeof val === 'number' && val > 0 ? String(val) : '')}
+                  />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* 2. Bottom Row: Batch Induction Vertical Stacked Bar Chart & User Status */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -320,10 +196,10 @@ export function OverviewTab({ records }: OverviewTabProps) {
                           return (
                             <div className="rounded-lg border border-border bg-popover p-2.5 shadow-md text-xs space-y-1">
                               <p className="font-semibold text-foreground border-b border-border pb-1">Batch Date: {label}</p>
-                              <p className="text-cyan-600 dark:text-cyan-400">
+                              <p className="text-blue-600 dark:text-blue-400">
                                 OG-I: <strong className="font-mono">{og1Val}</strong>
                               </p>
-                              <p className="text-indigo-600 dark:text-indigo-400">
+                              <p className="text-purple-600 dark:text-purple-400">
                                 OG-II: <strong className="font-mono">{og2Val}</strong>
                               </p>
                               {Number(othersVal) > 0 && (
@@ -349,7 +225,7 @@ export function OverviewTab({ records }: OverviewTabProps) {
                         />
                       </Bar>
                       {/* 2. OG-2 Stack (Middle of Stack) */}
-                      <Bar dataKey="og2" name="OG-II / OG-2" fill="#818cf8" stackId="batch" maxBarSize={28}>
+                      <Bar dataKey="og2" name="OG-II / OG-2" fill="#8b5cf6" stackId="batch" maxBarSize={28}>
                         <LabelList
                           dataKey="og2"
                           position="center"
@@ -358,7 +234,7 @@ export function OverviewTab({ records }: OverviewTabProps) {
                         />
                       </Bar>
                       {/* 3. OG-1 Stack (Top of Stack with Total Batch Label) */}
-                      <Bar dataKey="og1" name="OG-I / OG-1" fill="#0284c7" stackId="batch" radius={[2, 2, 0, 0]} maxBarSize={28}>
+                      <Bar dataKey="og1" name="OG-I / OG-1" fill="#1d4ed8" stackId="batch" radius={[2, 2, 0, 0]} maxBarSize={28}>
                         <LabelList
                           dataKey="og1"
                           position="center"
@@ -400,15 +276,32 @@ export function OverviewTab({ records }: OverviewTabProps) {
             <div className="h-[180px] sm:h-[200px] w-full min-w-0">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (!active || !payload || !payload.length) return null;
+                      const data = payload[0];
+                      const val = Number(data.value) || 0;
+                      const total = statusData.reduce((acc, curr) => acc + curr.count, 0) || 1;
+                      const pct = ((val / total) * 100).toFixed(1);
+                      return (
+                        <div className="rounded-lg border border-border bg-popover p-2.5 shadow-md text-xs space-y-1">
+                          <p className="font-semibold text-foreground border-b border-border pb-1">{data.name}</p>
+                          <p className="text-primary">
+                            Headcount: <strong className="font-mono font-bold">{val}</strong> staff ({pct}%)
+                          </p>
+                        </div>
+                      );
+                    }}
+                  />
                   <Pie
                     data={statusData}
                     dataKey="count"
                     nameKey="status"
                     cx="50%"
                     cy="50%"
-                    innerRadius={45}
-                    outerRadius={70}
-                    paddingAngle={2}
+                    outerRadius={75}
+                    stroke="var(--card)"
+                    strokeWidth={2}
                   >
                     {statusData.map((entry, index) => (
                       <Cell
@@ -417,7 +310,6 @@ export function OverviewTab({ records }: OverviewTabProps) {
                       />
                     ))}
                   </Pie>
-                  <Tooltip />
                 </PieChart>
               </ResponsiveContainer>
             </div>

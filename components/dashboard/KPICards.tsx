@@ -7,12 +7,15 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Info } from 'lucide-react';
+import { formatTenureReadable } from '@/lib/analytics';
 
 interface KPICardsProps {
   metrics: HRMetricsSummary;
 }
 
 export function KPICards({ metrics }: KPICardsProps) {
+  const tenureFormatted = formatTenureReadable(metrics.avgTenureYears);
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
       {/* 1. Total Headcount */}
@@ -44,7 +47,7 @@ export function KPICards({ metrics }: KPICardsProps) {
                   <Info className="h-3 w-3 text-muted-foreground/70 cursor-pointer" />
                 </TooltipTrigger>
                 <TooltipContent className="text-xs">
-                  Percentage of workforce currently in Active status
+                  Percentage of active employees in dataset
                 </TooltipContent>
               </Tooltip>
             </span>
@@ -70,23 +73,30 @@ export function KPICards({ metrics }: KPICardsProps) {
                   <Info className="h-3 w-3 text-muted-foreground/70 cursor-pointer" />
                 </TooltipTrigger>
                 <TooltipContent className="text-xs">
-                  Calculated from employee HIRE_DATE
+                  Calculated from employee HIRE_DATE ({metrics.avgTenureYears} yrs avg)
                 </TooltipContent>
               </Tooltip>
             </span>
-            <span className="text-[10px] text-muted-foreground font-mono shrink-0">Years</span>
+            <span className="text-[10px] text-muted-foreground font-mono shrink-0">Tenure</span>
           </div>
           <div className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-mono">
             {metrics.avgTenureYears > 0 ? (
-              <>
-                {metrics.avgTenureYears} <span className="text-xs sm:text-sm font-normal text-muted-foreground">yrs</span>
-              </>
+              <div className="flex items-baseline gap-1">
+                <span>{tenureFormatted.display}</span>
+                {tenureFormatted.unit && (
+                  <span className="text-xs sm:text-sm font-normal text-muted-foreground">{tenureFormatted.unit}</span>
+                )}
+              </div>
             ) : (
               'N/A'
             )}
           </div>
-          <p className="text-[11px] text-muted-foreground truncate">
-            {metrics.avgTenureYears >= 5 ? 'High stability' : (metrics.avgTenureYears > 0 ? 'Growing tenure' : 'No tenure data')}
+          <p className="text-[11px] text-muted-foreground truncate" title={tenureFormatted.fullText}>
+            {metrics.avgTenureYears > 0 ? (
+              metrics.avgTenureYears < 1 ? `New cohort (~${metrics.avgTenureYears} yrs)` : tenureFormatted.fullText
+            ) : (
+              'No tenure data'
+            )}
           </p>
         </CardContent>
       </Card>
